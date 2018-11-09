@@ -90,7 +90,29 @@ func get(w http.ResponseWriter, r *http.Request) {
 }
 
 func set(w http.ResponseWriter, r *http.Request) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		log.Warn().Err(err).Msg("missing authorization header")
+		http.Error(w, "Missing Authorization header.", 401)
+		return
+	}
+
+	token := strings.Split(auth, " ")[1]
+	user, err := acd.VerifyAuth(token)
+	if err != nil {
+		log.Warn().Err(err).Str("token", token).Msg("wrong authorization token")
+		http.Error(w, "Wrong authorization token.", 401)
+		return
+	}
+
 	owner := mux.Vars(r)["owner"]
+	if owner != user {
+		log.Warn().Err(err).Str("auth-as", user).Str("needed", owner).
+			Msg("authorized for a different user")
+		http.Error(w, "Authorized for a different user: "+user, 401)
+		return
+	}
+
 	name := mux.Vars(r)["name"]
 
 	data, err := ioutil.ReadAll(r.Body)

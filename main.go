@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/fiatjaf/accountd"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -23,6 +24,7 @@ var err error
 var s Settings
 var r *mux.Router
 var pg *sqlx.DB
+var acd = accountd.NewClient()
 var log = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 func main() {
