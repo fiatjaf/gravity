@@ -1,0 +1,5 @@
+*.swp
+*.swo
+*.env
+ipci
+node_modules
