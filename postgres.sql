@@ -9,6 +9,7 @@ CREATE TABLE head (
   name text NOT NULL,
   cid text NOT NULL,
   updated_at timestamp NOT NULL DEFAULT now(),
+  note text NOT NULL DEFAULT '',
 
   UNIQUE (owner, name),
   CHECK (owner ~ '[\w\d-]+'),
@@ -18,3 +19,6 @@ CREATE TABLE head (
 CREATE INDEX ON head (owner);
 CREATE INDEX ON head (name);
 CREATE INDEX ON head (cid);
+
+table users;
+table head;

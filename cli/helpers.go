@@ -5,15 +5,22 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mitchellh/go-homedir"
+	"github.com/tidwall/gjson"
 )
+
+type CIDQuery struct {
+	CID string `url:"cid"`
+}
 
 func getIPFSDir() string {
 	ipfspath := os.Getenv("IPFS_PATH")
@@ -30,7 +37,7 @@ func getIPFSDir() string {
 	return ipfspath
 }
 
-func GetPrivateKey(name string) (sk *rsa.PrivateKey, err error) {
+func getPrivateKey(name string) (sk *rsa.PrivateKey, err error) {
 	dir := getIPFSDir()
 
 	files, err := ioutil.ReadDir(filepath.Join(dir, "keystore"))
@@ -82,13 +89,17 @@ gotkey:
 	return
 }
 
-func makeJWT(key *rsa.PrivateKey, owner, name, cid string) (token string, err error) {
+func makeJWT(key *rsa.PrivateKey, claims jwt.MapClaims) (token string, err error) {
 	return jwt.NewWithClaims(&jwt.SigningMethodRSA{
 		Name: "SHA256",
 		Hash: crypto.SHA256,
-	}, jwt.MapClaims{
-		"owner": owner,
-		"name":  name,
-		"cid":   cid,
-	}).SignedString(key)
+	}, claims).SignedString(key)
+}
+
+func printRecord(w io.Writer, value gjson.Result) {
+	fmt.Fprintln(w, strings.Join([]string{
+		value.Get("owner").String() + "/" + value.Get("name").String(),
+		value.Get("cid").String(),
+		value.Get("note").String(),
+	}, "\t"))
 }

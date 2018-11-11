@@ -10,10 +10,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/badoux/checkmail"
 	"github.com/dghubble/sling"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/gjson"
 )
 
 var server string
@@ -78,7 +81,7 @@ var RegisterCmd = &cobra.Command{
 		email := args[1]
 
 		// get public key pem
-		sk, err := GetPrivateKey("ipci")
+		sk, err := getPrivateKey("ipci")
 		if err != nil {
 			return
 		}
@@ -110,8 +113,40 @@ var RegisterCmd = &cobra.Command{
 var GetCmd = &cobra.Command{
 	Use:   "get [key or cid]",
 	Short: "Get something from ipci.xyz",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		var req *http.Request
 
+		if strings.IndexByte(args[0], '/') == -1 {
+			cid := args[0]
+			req, _ = c.Get("/").QueryStruct(CIDQuery{cid}).Request()
+		} else {
+			parts := strings.Split(args[0], "/")
+			owner := parts[0]
+			name := parts[1]
+			req, _ = c.Get("/" + owner + "/" + name).Request()
+		}
+
+		w, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			return
+		}
+
+		b, _ := ioutil.ReadAll(w.Body)
+		j := gjson.ParseBytes(b)
+		tw := tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
+
+		if j.IsArray() {
+			j.ForEach(func(_, value gjson.Result) bool {
+				printRecord(tw, value)
+				return true
+			})
+		} else if j.IsObject() {
+			printRecord(tw, j)
+		}
+
+		tw.Flush()
 	},
 }
 
@@ -129,7 +164,7 @@ var PutCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		sk, err := GetPrivateKey("ipci")
+		sk, err := getPrivateKey("ipci")
 		if err != nil {
 			return
 		}
@@ -139,13 +174,18 @@ var PutCmd = &cobra.Command{
 		name := parts[1]
 		cid := args[1]
 
-		token, err := makeJWT(sk, owner, name, cid)
+		token, err := makeJWT(sk, jwt.MapClaims{
+			"owner": owner,
+			"name":  name,
+			"cid":   cid,
+		})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to make JWT: %s", err)
 			return
 		}
 
-		req, _ := c.Put("/"+owner+"/"+name).Set("Token", token).Request()
+		req, _ := c.Put("/"+owner+"/"+name).Set("Token", token).
+			Body(bytes.NewBufferString(cid)).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
@@ -162,7 +202,45 @@ var PutCmd = &cobra.Command{
 var DelCmd = &cobra.Command{
 	Use:   "del",
 	Short: "Delete something from ipci.xyz",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 1 {
+			return errors.New("1 arguments is required: username/recordname.")
+		}
+		parts := strings.Split(args[0], "/")
+		if parts[0] == "" || parts[1] == "" {
+			return errors.New("Argument must be username/recordname.")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
+		sk, err := getPrivateKey("ipci")
+		if err != nil {
+			return
+		}
 
+		parts := strings.Split(args[0], "/")
+		owner := parts[0]
+		name := parts[1]
+
+		token, err := makeJWT(sk, jwt.MapClaims{
+			"owner": owner,
+			"name":  name,
+		})
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to make JWT: %s", err)
+			return
+		}
+
+		req, _ := c.Delete("/"+owner+"/"+name).Set("Token", token).Request()
+		w, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			return
+		}
+		if w.StatusCode >= 300 {
+			b, _ := ioutil.ReadAll(w.Body)
+			fmt.Fprintln(os.Stderr, string(b))
+			return
+		}
 	},
 }

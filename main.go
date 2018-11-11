@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -57,15 +58,25 @@ func main() {
 			http.ServeFile(w, r, "./public/icon.png")
 			return
 		})
-	r.Path("/{owner}").Methods("POST").HandlerFunc(set)
-	r.Path("/{owner}/").Methods("POST").HandlerFunc(set)
-	r.Path("/{owner}/{name}").Methods("PUT").HandlerFunc(set)
-	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(set)
-	r.Path("/").Methods("GET").HandlerFunc(get)
-	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(get)
-	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(get)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-]+}").Methods("GET").HandlerFunc(get)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-]+}/").Methods("GET").HandlerFunc(get)
+	r.Path("/{owner}").Methods("POST").HandlerFunc(registerUser)
+	r.Path("/{owner}/").Methods("POST").HandlerFunc(registerUser)
+	r.Path("/{owner}").Methods("PATCH").HandlerFunc(updateUser)
+	r.Path("/{owner}/").Methods("PATCH").HandlerFunc(updateUser)
+	r.Path("/{owner}/{name}").Methods("PUT").HandlerFunc(setName)
+	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(setName)
+	r.Path("/{owner}/{name}").Methods("DELETE").HandlerFunc(delName)
+	r.Path("/{owner}/{name}/").Methods("DELETE").HandlerFunc(delName)
+	r.Path("/").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/html") {
+			http.ServeFile(w, r, "static/index.html")
+		} else {
+			listNames(w, r)
+		}
+	})
+	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(listNames)
+	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(listNames)
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}").Methods("GET").HandlerFunc(getName)
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").HandlerFunc(getName)
 	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
 
 	// start the server
