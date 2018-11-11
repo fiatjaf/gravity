@@ -1,5 +1,11 @@
+CREATE TABLE users (
+  name text PRIMARY KEY,
+  email text NOT NULL,
+  pk text
+);
+
 CREATE TABLE head (
-  owner text NOT NULL,
+  owner text NOT NULL references users (name),
   name text NOT NULL,
   cid text NOT NULL,
   updated_at timestamp NOT NULL DEFAULT now(),

@@ -1,11 +1,12 @@
 package main
 
 import (
+	"crypto"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/fiatjaf/accountd"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -24,8 +25,15 @@ var err error
 var s Settings
 var r *mux.Router
 var pg *sqlx.DB
-var acd = accountd.NewClient()
 var log = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+func init() {
+	jwt.RegisterSigningMethod("SHA256", func() jwt.SigningMethod {
+		return &jwt.SigningMethodRSA{
+			Name: "SHA256", Hash: crypto.SHA256,
+		}
+	})
+}
 
 func main() {
 	err = envconfig.Process("", &s)
@@ -49,8 +57,10 @@ func main() {
 			http.ServeFile(w, r, "./public/icon.png")
 			return
 		})
-	r.Path("/{owner}/{name}").Methods("POST").HandlerFunc(set)
-	r.Path("/{owner}/{name}/").Methods("POST").HandlerFunc(set)
+	r.Path("/{owner}").Methods("POST").HandlerFunc(set)
+	r.Path("/{owner}/").Methods("POST").HandlerFunc(set)
+	r.Path("/{owner}/{name}").Methods("PUT").HandlerFunc(set)
+	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(set)
 	r.Path("/").Methods("GET").HandlerFunc(get)
 	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(get)
 	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(get)
