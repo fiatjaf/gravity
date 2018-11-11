@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "array-uniq": "^2.0.0",
     "react": "^16.7.0-alpha.0",
     "react-dom": "^16.7.0-alpha.0",
     "react-toastify": "^4.4.0"

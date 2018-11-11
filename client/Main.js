@@ -1,6 +1,7 @@
 /** @format */
 
 const fetch = window.fetch
+const uniq = require('array-uniq')
 
 import {ToastContainer, toast} from 'react-toastify'
 import React, {useState, useEffect, useRef} from 'react' // eslint-disable-line no-unused-vars
@@ -20,16 +21,43 @@ export default function Main() {
       <ToastContainer />
 
       <table>
-        {entries.map(({owner, name, cid}) => (
-          <tr key={owner + '/' + name}>
-            <td>
-              {owner}/{name}
-            </td>
-            <td>{cid}</td>
-          </tr>
-        ))}
+        <tbody>
+          {entries.map(entry => (
+            <RecordRow key={entry.owner + '/' + entry.name} {...entry} />
+          ))}
+        </tbody>
       </table>
     </>
+  )
+}
+
+function RecordRow({owner, name, cid, note}) {
+  let [nprovs, setNProvs] = useState(null)
+
+  useEffect(() => {
+    if (window.ipfs) {
+      window.ipfs.dht
+        .findprovs(cid)
+        .catch(err => console.warn('error finding provs for ' + cid, err))
+        .then(peerInfos => {
+          setNProvs(uniq(peerInfos.map(p => p.ID).filter(x => x)).length)
+        })
+    }
+  }, [])
+
+  return (
+    <tr>
+      <td>
+        {owner}/{name}
+      </td>
+      <td>
+        <a target="_blank" href={`https://ipfs.io/ipfs/${cid}`}>
+          {cid}
+        </a>
+      </td>
+      {nprovs !== null && <td>{nprovs} providers</td>}
+      <td>{note}</td>
+    </tr>
   )
 }
 
