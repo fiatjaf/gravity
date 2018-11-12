@@ -6,6 +6,7 @@ import {toast} from 'react-toastify'
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
 
 import RecordRow from './RecordRow'
+import {fetchEntries} from './helpers'
 
 export default function Home() {
   let [downloads, setDownloads] = useState([])
@@ -56,19 +57,6 @@ export default function Home() {
       </section>
     </>
   )
-}
-
-async function fetchEntries() {
-  try {
-    let res = await fetch('/')
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
-  } catch (err) {
-    console.error(err)
-    toast('failed to fetch entries: ' + err.message, {
-      type: 'error'
-    })
-  }
 }
 
 async function fetchReleases() {

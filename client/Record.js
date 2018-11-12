@@ -4,6 +4,7 @@ const fetch = window.fetch
 
 import {toast} from 'react-toastify'
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
+import {Link} from 'react-router-dom'
 
 export default function Home(props) {
   let {owner, name} = props.match.params
@@ -22,7 +23,7 @@ export default function Home(props) {
       <main id="record">
         <header>
           <h1>
-            {owner}/{name}
+            <Link to={`/${owner}`}>{owner}</Link>/{name}
           </h1>
           <aside>{entry && <p>{entry.note}</p>}</aside>
         </header>
