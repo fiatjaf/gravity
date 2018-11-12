@@ -6,7 +6,20 @@ const uniq = require('array-uniq')
 import {ToastContainer, toast} from 'react-toastify'
 import React, {useState, useEffect, useRef} from 'react' // eslint-disable-line no-unused-vars
 
+import Portal from './Portal.js'
+
+const service = {
+  name: process.env.SERVICE_NAME || 'Planet',
+  url: process.env.SERVICE_URL || 'https://github.com/fiatjaf/gravity',
+  provider: {
+    name: process.env.SERVICE_PROVIDER_NAME || 'gravity',
+    url:
+      process.env.SERVICE_PROVIDER_URL || 'https://github.com/fiatjaf/gravity'
+  }
+}
+
 export default function Main() {
+  let [downloads, setDownloads] = useState([])
   let [entries, setEntries] = useState([])
 
   async function loadEntries() {
@@ -16,9 +29,37 @@ export default function Main() {
 
   useEffect(loadEntries, [])
 
+  useEffect(async () => {
+    let releases = await fetchReleases()
+    setDownloads(
+      releases.assets.map(a => ({name: a.name, id: a.id, url: a.url}))
+    )
+  }, [])
+
   return (
     <>
       <ToastContainer />
+
+      <Portal to="header > h1" clear>
+        {service.name}
+      </Portal>
+      <Portal to="header aside .name" clear>
+        {service.name.toLowerCase()}
+      </Portal>
+
+      <Portal to="#downloads">
+        {downloads.map(d => (
+          <div key={d.id}>
+            <a href={d.url} target="_blank">
+              {d.name}
+            </a>{' '}
+            <code>
+              sudo curl {d.url} > /usr/local/bin/gravity && sudo chmod
+              /usr/local/bin/gravity
+            </code>
+          </div>
+        ))}
+      </Portal>
 
       <table>
         <tbody>
@@ -27,6 +68,13 @@ export default function Main() {
           ))}
         </tbody>
       </table>
+
+      <Portal to="footer" clear>
+        <p>
+          <a href={service.provider.url}>{service.provider.name}</a>,{' '}
+          {new Date().getFullYear()}
+        </p>
+      </Portal>
     </>
   )
 }
@@ -69,6 +117,21 @@ async function fetchEntries() {
   } catch (err) {
     console.error(err)
     toast('failed to fetch entries: ' + err.message, {
+      type: 'error'
+    })
+  }
+}
+
+async function fetchReleases() {
+  try {
+    let res = await fetch(
+      'https://api.github.com/repos/fiatjaf/gravity/releases?per_page=1'
+    )
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  } catch (err) {
+    console.error(err)
+    toast('failed to fetch releases: ' + err.message, {
       type: 'error'
     })
   }

@@ -12,8 +12,8 @@ CREATE TABLE head (
   note text NOT NULL DEFAULT '',
 
   UNIQUE (owner, name),
-  CHECK (owner ~ '[\w\d-]+'),
-  CHECK (name ~ '[\w\d-]+')
+  CHECK (owner ~ '[\w\d.-]+'),
+  CHECK (name ~ '[\w\d.-]+')
 );
 
 CREATE INDEX ON head (owner);
