@@ -1,12 +1,12 @@
 /** @format */
 
-const fetch = window.fetch
-const uniq = require('array-uniq')
+import {ToastContainer} from 'react-toastify'
+import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
+import {BrowserRouter as Router, Route} from 'react-router-dom'
 
-import {ToastContainer, toast} from 'react-toastify'
-import React, {useState, useEffect, useRef} from 'react' // eslint-disable-line no-unused-vars
-
-import Portal from './Portal.js'
+import Portal from './Portal'
+import Home from './Home'
+import Record from './Record'
 
 const service = {
   name: process.env.SERVICE_NAME || 'Planet',
@@ -18,23 +18,17 @@ const service = {
   }
 }
 
+export const GlobalContext = React.createContext({})
+
 export default function Main() {
-  let [downloads, setDownloads] = useState([])
-  let [entries, setEntries] = useState([])
-
-  async function loadEntries() {
-    let entries = await fetchEntries()
-    if (entries) setEntries(entries)
-  }
-
-  useEffect(loadEntries, [])
+  let [nodeId, setNodeId] = useState(null)
 
   useEffect(async () => {
-    let releases = await fetchReleases()
-    setDownloads(
-      releases.assets.map(a => ({name: a.name, id: a.id, url: a.url}))
-    )
-  }, [])
+    if (window.ipfs) {
+      let info = await window.ipfs.id()
+      setNodeId(info.ID)
+    }
+  })
 
   return (
     <>
@@ -50,27 +44,12 @@ export default function Main() {
         {service.name.toLowerCase()}
       </Portal>
 
-      <Portal to="#downloads">
-        {downloads.map(d => (
-          <div key={d.id}>
-            <a href={d.url} target="_blank">
-              {d.name}
-            </a>{' '}
-            <code>
-              sudo curl {d.url} > /usr/local/bin/gravity && sudo chmod
-              /usr/local/bin/gravity
-            </code>
-          </div>
-        ))}
-      </Portal>
-
-      <table>
-        <tbody>
-          {entries.map(entry => (
-            <RecordRow key={entry.owner + '/' + entry.name} {...entry} />
-          ))}
-        </tbody>
-      </table>
+      <Router>
+        <GlobalContext.Provider value={{nodeId}}>
+          <Route exact path="/" component={Home} />
+          <Route path="/:owner/:name" component={Record} />
+        </GlobalContext.Provider>
+      </Router>
 
       <Portal to="footer" clear>
         <p>
@@ -80,62 +59,4 @@ export default function Main() {
       </Portal>
     </>
   )
-}
-
-function RecordRow({owner, name, cid, note}) {
-  let [nprovs, setNProvs] = useState(null)
-
-  useEffect(() => {
-    if (window.ipfs) {
-      window.ipfs.dht
-        .findprovs(cid)
-        .catch(err => console.warn('error finding provs for ' + cid, err))
-        .then(peerInfos => {
-          setNProvs(uniq(peerInfos.map(p => p.ID).filter(x => x)).length)
-        })
-    }
-  }, [])
-
-  return (
-    <tr>
-      <td>
-        {owner}/{name}
-      </td>
-      <td>
-        <a target="_blank" href={`https://ipfs.io/ipfs/${cid}`}>
-          {cid}
-        </a>
-      </td>
-      {nprovs !== null && <td>{nprovs} providers</td>}
-      <td>{note}</td>
-    </tr>
-  )
-}
-
-async function fetchEntries() {
-  try {
-    let res = await fetch('/')
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
-  } catch (err) {
-    console.error(err)
-    toast('failed to fetch entries: ' + err.message, {
-      type: 'error'
-    })
-  }
-}
-
-async function fetchReleases() {
-  try {
-    let res = await fetch(
-      'https://api.github.com/repos/fiatjaf/gravity/releases?per_page=1'
-    )
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
-  } catch (err) {
-    console.error(err)
-    toast('failed to fetch releases: ' + err.message, {
-      type: 'error'
-    })
-  }
 }

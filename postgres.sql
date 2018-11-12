@@ -9,11 +9,14 @@ CREATE TABLE head (
   name text NOT NULL,
   cid text NOT NULL,
   updated_at timestamp NOT NULL DEFAULT now(),
-  note text NOT NULL DEFAULT '',
+  note text,
 
   UNIQUE (owner, name),
-  CHECK (owner ~ '[\w\d.-]+'),
-  CHECK (name ~ '[\w\d.-]+')
+  CONSTRAINT check_owner CHECK (owner ~ '[\w\d.-]+'),
+  CONSTRAINT check_name CHECK (name ~ '[\w\d.-]+'),
+  CONSTRAINT check_owner_size CHECK (character_length(owner) <= 35),
+  CONSTRAINT check_name_size CHECK (character_length(name) <= 50),
+  CONSTRAINT check_note_size CHECK (character_length(note) <= 280),
 );
 
 CREATE INDEX ON head (owner);

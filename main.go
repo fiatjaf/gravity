@@ -66,17 +66,21 @@ func main() {
 	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(setName)
 	r.Path("/{owner}/{name}").Methods("DELETE").HandlerFunc(delName)
 	r.Path("/{owner}/{name}/").Methods("DELETE").HandlerFunc(delName)
-	r.Path("/").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept"), "text/html") {
-			http.ServeFile(w, r, "static/index.html")
-		} else {
-			listNames(w, r)
-		}
-	})
-	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(listNames)
-	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(listNames)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}").Methods("GET").HandlerFunc(getName)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").HandlerFunc(getName)
+	r.Path("/").Methods("GET").HandlerFunc(
+		switchHTMLJSON(listNames),
+	)
+	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(
+		switchHTMLJSON(listNames),
+	)
+	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(
+		switchHTMLJSON(listNames),
+	)
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}").Methods("GET").HandlerFunc(
+		switchHTMLJSON(getName),
+	)
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").HandlerFunc(
+		switchHTMLJSON(getName),
+	)
 	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
 
 	// start the server
@@ -88,4 +92,14 @@ func main() {
 	}
 	log.Info().Str("port", s.Port).Msg("listening.")
 	srv.ListenAndServe()
+}
+
+func switchHTMLJSON(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/html") {
+			http.ServeFile(w, r, "static/index.html")
+		} else {
+			next(w, r)
+		}
+	}
 }
