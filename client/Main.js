@@ -40,6 +40,9 @@ export default function Main() {
     <>
       <ToastContainer />
 
+      <Portal to="title" clear>
+        {service.name} - IPFS Gravitational Body
+      </Portal>
       <Portal to="header > h1" clear>
         {service.name}
       </Portal>
