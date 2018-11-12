@@ -14,18 +14,22 @@ import (
 
 	"github.com/badoux/checkmail"
 	"github.com/dghubble/sling"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 )
 
 var server string
 var c *sling.Sling
+var wait int
 
 func main() {
 	rootCmd.PersistentFlags().
 		StringVarP(&server, "server", "s", "bigsun.xyz", "Gravity server to use.")
 	rootCmd.PersistentFlags().Parse(os.Args[1:])
+
+	PutCmd.Flags().IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs dht findprovs'.")
+	PutCmd.Flags().Parse(os.Args[1:])
 
 	baseURL := server
 	if !strings.HasPrefix(server, "http") {
@@ -92,14 +96,14 @@ var RegisterCmd = &cobra.Command{
 			Type:  "PUBLIC KEY",
 			Bytes: x509.MarshalPKCS1PublicKey(&sk.PublicKey),
 		}); err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to encode public key: %s", err)
+			fmt.Fprintln(os.Stderr, "Failed to encode public key: "+err.Error())
 			return
 		}
 
 		req, _ := c.Post("/"+username).Set("Email", email).Body(body).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
 			return
 		}
 		if w.StatusCode >= 300 {
@@ -129,7 +133,7 @@ var GetCmd = &cobra.Command{
 
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
 			return
 		}
 
@@ -174,13 +178,21 @@ var PutCmd = &cobra.Command{
 		name := parts[1]
 		cid := args[1]
 
+		// check if we have the file
+		ok := checkCIDExistence(cid, wait)
+		if !ok {
+			fmt.Fprintln(os.Stderr, "File not available on IPFS.")
+			return
+		}
+
+		// make jwt to send request
 		token, err := makeJWT(sk, jwt.MapClaims{
 			"owner": owner,
 			"name":  name,
 			"cid":   cid,
 		})
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to make JWT: %s", err)
+			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
 			return
 		}
 
@@ -188,7 +200,7 @@ var PutCmd = &cobra.Command{
 			Body(bytes.NewBufferString(cid)).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
 			return
 		}
 		if w.StatusCode >= 300 {
@@ -227,14 +239,14 @@ var DelCmd = &cobra.Command{
 			"name":  name,
 		})
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to make JWT: %s", err)
+			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
 			return
 		}
 
 		req, _ := c.Delete("/"+owner+"/"+name).Set("Token", token).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Request failed: %s", err)
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
 			return
 		}
 		if w.StatusCode >= 300 {
