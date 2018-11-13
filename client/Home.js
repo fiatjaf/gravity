@@ -1,15 +1,11 @@
 /** @format */
 
-const fetch = window.fetch
-
-import {toast} from 'react-toastify'
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
 
 import RecordRow from './RecordRow'
 import {fetchEntries} from './helpers'
 
 export default function Home() {
-  let [downloads, setDownloads] = useState([])
   let [entries, setEntries] = useState([])
 
   async function loadEntries() {
@@ -19,32 +15,8 @@ export default function Home() {
 
   useEffect(loadEntries, [])
 
-  useEffect(async () => {
-    let releases = await fetchReleases()
-    setDownloads(
-      releases[0].assets.map(a => ({
-        name: a.name,
-        id: a.id,
-        url: a.browser_download_url
-      }))
-    )
-  }, [])
-
   return (
     <>
-      <div>
-        {downloads.map(d => (
-          <div key={d.id}>
-            <code>
-              sudo curl{' '}
-              <a href={d.url} target="_blank">
-                {d.url}
-              </a>{' '}
-              > /usr/local/bin/gravity && sudo chmod /usr/local/bin/gravity
-            </code>
-          </div>
-        ))}
-      </div>
       <section>
         <h1>Objects</h1>
         <table>
@@ -57,19 +29,4 @@ export default function Home() {
       </section>
     </>
   )
-}
-
-async function fetchReleases() {
-  try {
-    let res = await fetch(
-      'https://api.github.com/repos/fiatjaf/gravity/releases?per_page=1'
-    )
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
-  } catch (err) {
-    console.error(err)
-    toast('failed to fetch releases: ' + err.message, {
-      type: 'error'
-    })
-  }
 }

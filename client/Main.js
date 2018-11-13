@@ -46,8 +46,12 @@ export default function Main() {
           <Portal to="header aside .name" clear>
             {service.name.toLowerCase()}
           </Portal>
+          <Portal to=".bin-link" clear>
+            <Link to="/fiatjaf/gravity-binaries">fiatjaf/gravity-binaries</Link>
+          </Portal>
 
           <Route exact path="/" component={Home} />
+          <Route path="/" component={Cleanup} />
           <Route exact path="/:owner" component={User} />
           <Route path="/:owner/:name" component={Record} />
 
@@ -59,6 +63,15 @@ export default function Main() {
           </Portal>
         </GlobalContext.Provider>
       </Router>
+    </>
+  )
+}
+
+function Cleanup() {
+  return (
+    <>
+      <Portal to="body > header aside" clear />
+      <Portal to="#how-to" clear />
     </>
   )
 }

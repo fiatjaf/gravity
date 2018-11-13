@@ -7,6 +7,8 @@ export default class Portal extends React.Component {
   render() {
     let target = document.querySelector(this.props.to)
 
+    if (!target) return null
+
     if (this.props.clear && !target.dataset.cleared) {
       target.innerHTML = ''
       target.dataset.cleared = true
