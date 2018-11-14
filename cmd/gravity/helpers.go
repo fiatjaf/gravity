@@ -5,9 +5,11 @@ import (
 	"crypto"
 	"crypto/rsa"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +19,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 )
 
@@ -144,4 +147,51 @@ func checkCIDExistence(cid string, wait int) bool {
 	}
 
 	return false
+}
+
+func validateArgsRecord(second string) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) != 2 {
+			return errors.New("2 arguments are required, username/recordname and " + second + ".")
+		}
+		parts := strings.Split(args[0], "/")
+		if parts[0] == "" || parts[1] == "" {
+			return errors.New("First argument must be username/recordname.")
+		}
+		return nil
+	}
+}
+
+func updateRecord(args []string, key string, value interface{}) {
+	sk, err := getPrivateKey()
+	if err != nil {
+		return
+	}
+
+	parts := strings.Split(args[0], "/")
+	owner := parts[0]
+	name := parts[1]
+
+	// make jwt to send request
+	token, err := makeJWT(sk, jwt.MapClaims{
+		"owner": owner,
+		"name":  name,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
+		return
+	}
+
+	req, _ := c.Patch("/"+owner+"/"+name).Set("Token", token).
+		BodyJSON(map[string]interface{}{key: value}).Request()
+	w, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+		return
+	}
+	if w.StatusCode >= 300 {
+		b, _ := ioutil.ReadAll(w.Body)
+		fmt.Fprintln(os.Stderr, string(b))
+		return
+	}
 }

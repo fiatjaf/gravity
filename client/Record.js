@@ -1,6 +1,11 @@
 /** @format */
 
 const fetch = window.fetch
+const md = require('markdown-it')({
+  html: true,
+  linkify: true,
+  typographer: true
+})
 
 import {toast} from 'react-toastify'
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
@@ -25,10 +30,17 @@ export default function Home(props) {
           <h1>
             <Link to={`/${owner}`}>{owner}</Link>/{name}
           </h1>
-          <aside>{entry && <p>{entry.note}</p>}</aside>
         </header>
         {entry && (
-          <iframe src={`https://cloudflare-ipfs.com/ipfs/${entry.cid}`} />
+          <>
+            {entry.body && (
+              <div
+                className="body"
+                dangerouslySetInnerHTML={{__html: md.render(entry.body)}}
+              />
+            )}
+            <iframe src={`https://cloudflare-ipfs.com/ipfs/${entry.cid}`} />
+          </>
         )}
       </main>
     </>
@@ -37,7 +49,7 @@ export default function Home(props) {
 
 async function fetchEntry(owner, name) {
   try {
-    let res = await fetch(`/${owner}/${name}`)
+    let res = await fetch(`/${owner}/${name}?full=1`)
     if (!res.ok) throw new Error(await res.text())
     return res.json()
   } catch (err) {

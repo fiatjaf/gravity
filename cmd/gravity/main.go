@@ -43,6 +43,7 @@ func main() {
 	rootCmd.AddCommand(RegisterCmd)
 	rootCmd.AddCommand(PutCmd)
 	rootCmd.AddCommand(NoteCmd)
+	rootCmd.AddCommand(BodyCmd)
 	rootCmd.AddCommand(GetCmd)
 	rootCmd.AddCommand(DelCmd)
 	rootCmd.AddCommand(versionCmd)
@@ -110,7 +111,7 @@ var RegisterCmd = &cobra.Command{
 		}
 		if w.StatusCode >= 300 {
 			b, _ := ioutil.ReadAll(w.Body)
-			fmt.Fprintln(os.Stderr, string(b))
+			fmt.Fprint(os.Stderr, string(b))
 			return
 		}
 	},
@@ -159,16 +160,7 @@ var GetCmd = &cobra.Command{
 var PutCmd = &cobra.Command{
 	Use:   "put [key] [ipfs cid]",
 	Short: "Put something on the gravity server",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 2 {
-			return errors.New("2 arguments are required, username/recordname and record hash.")
-		}
-		parts := strings.Split(args[0], "/")
-		if parts[0] == "" || parts[1] == "" {
-			return errors.New("First argument must be username/recordname.")
-		}
-		return nil
-	},
+	Args:  validateArgsRecord("hash"),
 	Run: func(cmd *cobra.Command, args []string) {
 		sk, err := getPrivateKey()
 		if err != nil {
@@ -207,7 +199,7 @@ var PutCmd = &cobra.Command{
 		}
 		if w.StatusCode >= 300 {
 			b, _ := ioutil.ReadAll(w.Body)
-			fmt.Fprintln(os.Stderr, string(b))
+			fmt.Fprint(os.Stderr, string(b))
 			return
 		}
 	},
@@ -216,52 +208,24 @@ var PutCmd = &cobra.Command{
 var NoteCmd = &cobra.Command{
 	Use:   "note [key] [note]",
 	Short: "Set a note for the object given by [key].",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 2 {
-			return errors.New("2 arguments are required, username/recordname and note.")
-		}
-		parts := strings.Split(args[0], "/")
-		if parts[0] == "" || parts[1] == "" {
-			return errors.New("First argument must be username/recordname.")
-		}
-		return nil
-	},
+	Args:  validateArgsRecord("note"),
 	Run: func(cmd *cobra.Command, args []string) {
-		sk, err := getPrivateKey()
+		updateRecord(args, "note", args[1])
+	},
+}
+
+var BodyCmd = &cobra.Command{
+	Use:   "body [key] [filepath]",
+	Short: "Set a markdown body for the object given by [key].",
+	Args:  validateArgsRecord("the file path of where the body contents are"),
+	Run: func(cmd *cobra.Command, args []string) {
+		bbody, err := ioutil.ReadFile(args[1])
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed read file '"+args[1]+"': "+err.Error())
 			return
 		}
 
-		parts := strings.Split(args[0], "/")
-		owner := parts[0]
-		name := parts[1]
-		note := args[1]
-
-		// make jwt to send request
-		token, err := makeJWT(sk, jwt.MapClaims{
-			"owner": owner,
-			"name":  name,
-			"note":  note,
-		})
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
-			return
-		}
-
-		req, _ := c.Patch("/"+owner+"/"+name).Set("Token", token).
-			BodyJSON(struct {
-				Note string `json:"note"`
-			}{note}).Request()
-		w, err := http.DefaultClient.Do(req)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
-			return
-		}
-		if w.StatusCode >= 300 {
-			b, _ := ioutil.ReadAll(w.Body)
-			fmt.Fprintln(os.Stderr, string(b))
-			return
-		}
+		updateRecord(args, "body", string(bbody))
 	},
 }
 
@@ -305,7 +269,7 @@ var DelCmd = &cobra.Command{
 		}
 		if w.StatusCode >= 300 {
 			b, _ := ioutil.ReadAll(w.Body)
-			fmt.Fprintln(os.Stderr, string(b))
+			fmt.Fprint(os.Stderr, string(b))
 			return
 		}
 	},

@@ -14,6 +14,7 @@ type Entry struct {
 	Name  string `json:"name" db:"name"`
 	CID   string `json:"cid" db:"cid"`
 	Note  string `json:"note,omitempty" db:"note"`
+	Body  string `json:"body,omitempty" db:"body"`
 }
 
 func validateJWT(token, owner string, claimsToValidate map[string]interface{}) error {
@@ -56,12 +57,4 @@ func validateJWT(token, owner string, claimsToValidate map[string]interface{}) e
 	}
 
 	return nil
-}
-
-func selectWithMatch(match string) string {
-	return `
-        SELECT owner, name, cid, coalesce(note, '') AS note
-        FROM head ` +
-		match +
-		`ORDER BY updated_at DESC`
 }
