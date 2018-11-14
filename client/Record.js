@@ -40,6 +40,32 @@ export default function Home(props) {
               />
             )}
             <iframe src={`https://cloudflare-ipfs.com/ipfs/${entry.cid}`} />
+            {entry.history && (
+              <div id="history">
+                <h3>Versions</h3>
+                <table>
+                  <tbody>
+                    {entry.history.map(({cid, date}) => (
+                      <tr
+                        key={date}
+                        className={cid === entry.cid ? 'current' : ''}
+                      >
+                        <td>
+                          <a
+                            href={`https://ipfs.io/ipfs/${cid}`}
+                            target="_blank"
+                          >
+                            {cid}
+                          </a>
+                        </td>
+                        <td>{date}</td>
+                        <td>{cid === entry.cid ? 'CURRENT' : ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
       </main>

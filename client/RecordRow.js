@@ -41,9 +41,9 @@ export default function RecordRow({owner, name, cid, note}) {
           {cid}
         </a>
       </td>
+      <td>{note}</td>
       {nprovs !== null && <td>{nprovs} providers</td>}
       {nprovs !== null && <td>{ishere ? 'pinned here' : ''}</td>}
-      <td>{note}</td>
     </tr>
   )
 }

@@ -74,13 +74,28 @@ func getName(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 
 	// show specific key
-	var entry Entry
-	err = pg.Get(&entry, `
-        SELECT owner, name, cid, note, body
+	query := `
+        SELECT owner, name, cid, note
         FROM head
         WHERE owner = $1 AND name = $2
-    `, owner, name)
+    `
+	if r.URL.Query().Get("full") == "1" {
+		query = `
+            WITH h AS (
+                SELECT array_to_string(array_agg(cid || '|' || set_at), '~') AS r
+                FROM history
+                WHERE owner = $1 AND name = $2
+                GROUP BY id
+                ORDER BY id DESC
+            )
+            SELECT owner, name, cid, note, body, (SELECT r FROM h) AS raw_history
+            FROM head
+            WHERE owner = $1 AND name = $2
+        `
+	}
 
+	var entry Entry
+	err = pg.Get(&entry, query, owner, name)
 	res := &entry
 	if err == sql.ErrNoRows {
 		res = nil
@@ -93,8 +108,16 @@ func getName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.URL.Query().Get("full") != "1" {
-		res.Body = ""
+	if res.RawHistory.Valid {
+		hentries := strings.Split(res.RawHistory.String, "~")
+		res.History = make([]HistoryEntry, len(hentries))
+		for i, hentry := range hentries {
+			parts := strings.Split(hentry, "|")
+			res.History[i] = HistoryEntry{
+				CID:  parts[0],
+				Date: parts[1],
+			}
+		}
 	}
 
 	json.NewEncoder(w).Encode(res)

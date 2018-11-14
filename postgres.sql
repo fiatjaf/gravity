@@ -6,7 +6,7 @@ CREATE TABLE users (
 
 CREATE TABLE head (
   id serial PRIMARY KEY,
-  owner text NOT NULL references users (name),
+  owner text NOT NULL REFERENCES users (name),
   name text NOT NULL,
   cid text NOT NULL,
   updated_at timestamp NOT NULL DEFAULT now(),
@@ -25,5 +25,41 @@ CREATE INDEX ON head (owner);
 CREATE INDEX ON head (name);
 CREATE INDEX ON head (cid);
 
+CREATE TABLE history (
+  id serial PRIMARY KEY,
+  owner text NOT NULL,
+  name text NOT NULL,
+  set_at timestamp NOT NULL DEFAULT now(),
+  cid text NOT NULL,
+  prev int,
+
+  FOREIGN KEY (owner, name) REFERENCES head (owner, name)
+);
+
+CREATE INDEX ON history (owner, name);
+
+CREATE OR REPLACE FUNCTION update_history() RETURNS trigger AS $$
+  DECLARE
+    previous int;
+  BEGIN
+    IF TG_OP = 'UPDATE' THEN
+      SELECT id INTO previous FROM history
+        WHERE owner = NEW.owner AND name = NEW.name
+        ORDER BY id DESC LIMIT 1;
+    END IF;
+
+    INSERT INTO history (owner, name, cid, prev)
+      VALUES (NEW.owner, NEW.name, NEW.cid, previous);
+
+    RETURN NULL;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_history_ins AFTER INSERT ON head
+  FOR EACH ROW EXECUTE PROCEDURE update_history();
+CREATE TRIGGER update_history_upd AFTER UPDATE OF cid ON head
+  FOR EACH ROW WHEN (NEW.cid != OLD.cid) EXECUTE PROCEDURE update_history();
+
 table users;
+table history;
 select id, owner, name, cid, note from head;

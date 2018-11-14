@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/x509"
+	"database/sql"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -10,11 +11,18 @@ import (
 )
 
 type Entry struct {
-	Owner string `json:"owner" db:"owner"`
-	Name  string `json:"name" db:"name"`
-	CID   string `json:"cid" db:"cid"`
-	Note  string `json:"note,omitempty" db:"note"`
-	Body  string `json:"body,omitempty" db:"body"`
+	Owner      string         `json:"owner" db:"owner"`
+	Name       string         `json:"name" db:"name"`
+	CID        string         `json:"cid" db:"cid"`
+	Note       string         `json:"note,omitempty" db:"note"`
+	Body       string         `json:"body,omitempty" db:"body"`
+	RawHistory sql.NullString `json:"-" db:"raw_history"`
+	History    []HistoryEntry `json:"history,omitempty"`
+}
+
+type HistoryEntry struct {
+	CID  string `json:"cid"`
+	Date string `json:"date"`
 }
 
 func validateJWT(token, owner string, claimsToValidate map[string]interface{}) error {
