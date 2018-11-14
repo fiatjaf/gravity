@@ -10,6 +10,7 @@ import (
 
 	"github.com/badoux/checkmail"
 	"github.com/gorilla/mux"
+	"github.com/tidwall/gjson"
 )
 
 func listNames(w http.ResponseWriter, r *http.Request) {
@@ -202,6 +203,52 @@ func setName(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).Str("cid", cid).
+			Msg("error updating record")
+		http.Error(w, "Error updating record: "+err.Error(), 500)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func updateName(w http.ResponseWriter, r *http.Request) {
+	owner := mux.Vars(r)["owner"]
+	name := mux.Vars(r)["name"]
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Missing request body JSON.", 400)
+		return
+	}
+
+	rnote := gjson.GetBytes(data, "note")
+	if !rnote.Exists() {
+		http.Error(w, "Missing \"note\" in body.", 400)
+		return
+	}
+	note := rnote.String()
+
+	token := r.Header.Get("Token")
+	err = validateJWT(token, owner, map[string]interface{}{
+		"owner": owner,
+		"name":  name,
+		"note":  note,
+	})
+	if err != nil {
+		log.Warn().Err(err).Str("owner", owner).Str("name", name).Str("note", note).
+			Str("token", token).
+			Msg("token data is invalid")
+		http.Error(w, "Token data is invalid.", 401)
+		return
+	}
+
+	_, err = pg.Exec(`
+        UPDATE head SET note = $3, updated_at = now()
+        WHERE owner = $1 AND name = $2
+    `, owner, name, note)
+
+	if err != nil {
+		log.Warn().Err(err).Str("owner", owner).Str("name", name).Str("note", note).
 			Msg("error updating record")
 		http.Error(w, "Error updating record: "+err.Error(), 500)
 		return

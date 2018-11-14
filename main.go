@@ -64,6 +64,8 @@ func main() {
 	r.Path("/{owner}/").Methods("PATCH").HandlerFunc(updateUser)
 	r.Path("/{owner}/{name}").Methods("PUT").HandlerFunc(setName)
 	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(setName)
+	r.Path("/{owner}/{name}").Methods("PATCH").HandlerFunc(updateName)
+	r.Path("/{owner}/{name}/").Methods("PATCH").HandlerFunc(updateName)
 	r.Path("/{owner}/{name}").Methods("DELETE").HandlerFunc(delName)
 	r.Path("/{owner}/{name}/").Methods("DELETE").HandlerFunc(delName)
 	r.Path("/").Methods("GET").HandlerFunc(

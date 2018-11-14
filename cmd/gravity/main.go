@@ -28,7 +28,8 @@ func main() {
 		StringVarP(&server, "server", "s", "bigsun.xyz", "Gravity server to use.")
 	rootCmd.PersistentFlags().Parse(os.Args[1:])
 
-	PutCmd.Flags().IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs dht findprovs'.")
+	PutCmd.Flags().
+		IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs dht findprovs'.")
 	PutCmd.Flags().Parse(os.Args[1:])
 
 	baseURL := server
@@ -41,6 +42,7 @@ func main() {
 
 	rootCmd.AddCommand(RegisterCmd)
 	rootCmd.AddCommand(PutCmd)
+	rootCmd.AddCommand(NoteCmd)
 	rootCmd.AddCommand(GetCmd)
 	rootCmd.AddCommand(DelCmd)
 	rootCmd.AddCommand(versionCmd)
@@ -198,6 +200,58 @@ var PutCmd = &cobra.Command{
 
 		req, _ := c.Put("/"+owner+"/"+name).Set("Token", token).
 			Body(bytes.NewBufferString(cid)).Request()
+		w, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+			return
+		}
+		if w.StatusCode >= 300 {
+			b, _ := ioutil.ReadAll(w.Body)
+			fmt.Fprintln(os.Stderr, string(b))
+			return
+		}
+	},
+}
+
+var NoteCmd = &cobra.Command{
+	Use:   "note [key] [note]",
+	Short: "Set a note for the object given by [key].",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 2 {
+			return errors.New("2 arguments are required, username/recordname and note.")
+		}
+		parts := strings.Split(args[0], "/")
+		if parts[0] == "" || parts[1] == "" {
+			return errors.New("First argument must be username/recordname.")
+		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		sk, err := getPrivateKey()
+		if err != nil {
+			return
+		}
+
+		parts := strings.Split(args[0], "/")
+		owner := parts[0]
+		name := parts[1]
+		note := args[1]
+
+		// make jwt to send request
+		token, err := makeJWT(sk, jwt.MapClaims{
+			"owner": owner,
+			"name":  name,
+			"note":  note,
+		})
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
+			return
+		}
+
+		req, _ := c.Patch("/"+owner+"/"+name).Set("Token", token).
+			BodyJSON(struct {
+				Note string `json:"note"`
+			}{note}).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
