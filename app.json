@@ -1,0 +1,28 @@
+{
+  "name": "gravity",
+  "description": "A centralized index for IPFS objects.",
+  "repository": "https://github.com/fiatjaf/gravity",
+  "website": "https://github.com/fiatjaf/gravity",
+  "keywords": ["IPFS"],
+  "stack": "heroku-18",
+  "env": {
+    "SERVICE_NAME": {
+      "description": "A name for your gravitational body.",
+      "required": true
+    },
+    "SERVICE_URL": {"description": "The URL of your site.", "required": true},
+    "SERVICE_PROVIDER_NAME": {
+      "description": "Your name (or your organization's).",
+      "required": true
+    },
+    "SERVICE_PROVIDER_URL": {
+      "description": "Your URL (or your organization's).",
+      "required": true
+    }
+  },
+  "addons": [{"plan": "heroku-postgresql"}],
+  "buildpacks": [
+    {"url": "https://github.com/heroku/heroku-buildpack-go"},
+    {"url": "https://github.com/heroku/heroku-buildpack-nodejs"}
+  ]
+}

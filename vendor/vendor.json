@@ -1,0 +1,139 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "DPqLvieZrTUU3UXJpgfxnC3d+Es=",
+			"path": "github.com/badoux/checkmail",
+			"revision": "0755fe2dc241caebab64327c352006712f6a55c4",
+			"revisionTime": "2018-04-30T15:31:08Z"
+		},
+		{
+			"checksumSHA1": "uo3tvE16IbjxYfdFIhKUx0HCn8A=",
+			"path": "github.com/dghubble/sling",
+			"revision": "a0940ae70b814015bca996150db6f03aeb274060",
+			"revisionTime": "2018-10-13T18:22:07Z"
+		},
+		{
+			"checksumSHA1": "blOHP3HPYU+IeV6yWCalQuuM+zE=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "3af4c746e1c248ee8491a3e0c6f7a9cd831e95f8",
+			"revisionTime": "2018-09-21T17:23:15Z"
+		},
+		{
+			"checksumSHA1": "D801O79vbqb3Oj8ffY4xOnSg814=",
+			"path": "github.com/gogo/protobuf/proto",
+			"revision": "211a54c57504366b3bf4b490fb3c0a5f5b8d290b",
+			"revisionTime": "2018-11-04T16:40:17Z"
+		},
+		{
+			"checksumSHA1": "JZV+pLo8Z/kIYExrZr1Zu9KSKyU=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "9eb2c01ac278a5d89ce4b2be68fe4500955d8179",
+			"revisionTime": "2018-06-22T17:40:09Z"
+		},
+		{
+			"checksumSHA1": "p3IB18uJRs4dL2K5yx24MrLYE9A=",
+			"path": "github.com/google/go-querystring/query",
+			"revision": "44c6ddd0a2342c386950e880b658017258da92fc",
+			"revisionTime": "2018-09-16T13:16:37Z"
+		},
+		{
+			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
+			"path": "github.com/gorilla/context",
+			"revision": "215affda49addc4c8ef7e2534915df2c8c35c6cd",
+			"revisionTime": "2014-12-17T16:02:51Z"
+		},
+		{
+			"checksumSHA1": "YuYKzn2jczaM6DQcFDmukvAHUX4=",
+			"path": "github.com/gorilla/mux",
+			"revision": "b57cb1605fd11ba2ecfa7f68992b4b9cc791934d",
+			"revisionTime": "2018-04-16T20:45:19Z"
+		},
+		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "SEZulQ/Gm4f6P6/c3waZjXxvl0g=",
+			"path": "github.com/jmoiron/sqlx",
+			"revision": "d9bd385d68c068f1fabb5057e3dedcbcbb039d0f",
+			"revisionTime": "2017-04-30T19:46:03Z"
+		},
+		{
+			"checksumSHA1": "xXjxKqs3ECyWO5zjIVb2qgj9rcU=",
+			"path": "github.com/jmoiron/sqlx/reflectx",
+			"revision": "d9bd385d68c068f1fabb5057e3dedcbcbb039d0f",
+			"revisionTime": "2017-04-30T19:46:03Z"
+		},
+		{
+			"checksumSHA1": "MMeRLzVlQa2QyxxpLTWu0FIB/M0=",
+			"path": "github.com/kelseyhightower/envconfig",
+			"revision": "b2c5c876e2659d9060d82e9b8494150d53854cc4",
+			"revisionTime": "2018-03-08T19:05:16Z"
+		},
+		{
+			"checksumSHA1": "xxLSo5tKtXc7jGrR70yoEfza8Cw=",
+			"path": "github.com/lib/pq",
+			"revision": "9eb73efc1fcc404148b56765b0d3f61d9a5ef8ee",
+			"revisionTime": "2018-10-16T16:26:27Z"
+		},
+		{
+			"checksumSHA1": "ATnwV0POluBNQEMjPdylodz0oK0=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "9eb73efc1fcc404148b56765b0d3f61d9a5ef8ee",
+			"revisionTime": "2018-10-16T16:26:27Z"
+		},
+		{
+			"checksumSHA1": "a58zUNtDH/gEd6F6KI3FqT2iEo0=",
+			"path": "github.com/mitchellh/go-homedir",
+			"revision": "ae18d6b8b3205b561c79e8e5f69bff09736185f4",
+			"revisionTime": "2018-08-24T00:42:36Z"
+		},
+		{
+			"checksumSHA1": "19K+RM0SP2AnGUkuwH5IIpEBqCM=",
+			"path": "github.com/rs/zerolog",
+			"revision": "d2b7a51951c626ef9e7ca5ba8fe1cf1c4adefdba",
+			"revisionTime": "2018-04-19T20:12:29Z"
+		},
+		{
+			"checksumSHA1": "GYiqDY1zpHmRexJ8QZLo2P6m1RE=",
+			"path": "github.com/rs/zerolog/internal/cbor",
+			"revision": "d2b7a51951c626ef9e7ca5ba8fe1cf1c4adefdba",
+			"revisionTime": "2018-04-19T20:12:29Z"
+		},
+		{
+			"checksumSHA1": "4x4MA+8BoiblD70i0XiPGPEJIYE=",
+			"path": "github.com/rs/zerolog/internal/json",
+			"revision": "d2b7a51951c626ef9e7ca5ba8fe1cf1c4adefdba",
+			"revisionTime": "2018-04-19T20:12:29Z"
+		},
+		{
+			"checksumSHA1": "ldDS4SHM8qhDCHYfqloFWZ3GXvk=",
+			"path": "github.com/spf13/cobra",
+			"revision": "fe5e611709b0c57fa4a89136deaa8e1d4004d053",
+			"revisionTime": "2018-10-21T14:11:14Z"
+		},
+		{
+			"checksumSHA1": "ZKMWzq/Upc1waVJ6KkByCk813hs=",
+			"path": "github.com/spf13/pflag",
+			"revision": "aea12ed6721610dc6ed40141676d7ab0a1dac9e9",
+			"revisionTime": "2018-11-07T22:08:02Z"
+		},
+		{
+			"checksumSHA1": "+aq6vfX37dIMIqeWaE5tgf0v3fE=",
+			"path": "github.com/tidwall/gjson",
+			"revision": "1e3f6aeaa5bad08d777ea7807b279a07885dd8b2",
+			"revisionTime": "2018-08-02T15:58:17Z"
+		},
+		{
+			"checksumSHA1": "Tk+aXpWRuTQhURlO79bd7YogcU0=",
+			"path": "github.com/tidwall/match",
+			"revision": "1731857f09b1f38450e2c12409748407822dc6be",
+			"revisionTime": "2017-10-02T07:59:45Z"
+		}
+	],
+	"rootPath": "github.com/fiatjaf/gravity"
+}

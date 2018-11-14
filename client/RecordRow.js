@@ -1,7 +1,5 @@
 /** @format */
 
-const uniq = require('array-uniq')
-
 import React, {useState, useEffect, useContext} from 'react' // eslint-disable-line no-unused-vars
 import {Link} from 'react-router-dom'
 
@@ -19,7 +17,9 @@ export default function RecordRow({owner, name, cid, note}) {
         .findprovs(cid)
         .catch(err => console.warn('error finding provs for ' + cid, err))
         .then(peerInfos => {
-          setNProvs(uniq(peerInfos.map(p => p.ID).filter(x => x)).length)
+          setNProvs(
+            [...new Set(peerInfos.map(p => p.ID).filter(x => x))].length
+          )
 
           for (let i = 0; i < peerInfos.length; i++) {
             if (peerInfos[i].ID === nodeId) {
