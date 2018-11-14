@@ -106,14 +106,14 @@ func printRecord(w io.Writer, value gjson.Result) {
 }
 
 func checkCIDExistence(cid string, wait int) bool {
-	cmd := exec.Command("ipfs", "dht", "findprovs", cid)
+	cmd := exec.Command("ipfs", "object", "stat", cid)
 
 	buf := bytes.NewBuffer([]byte{})
 	cmd.Stdout = buf
 
 	err := cmd.Start()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Unable to run 'ipfs dht findprovs': "+err.Error())
+		fmt.Fprintln(os.Stderr, "Unable to run 'ipfs object stat': "+err.Error())
 		return false
 	}
 
@@ -126,18 +126,18 @@ func checkCIDExistence(cid string, wait int) bool {
 	case <-timeout:
 		cmd.Process.Kill()
 
-		if buf.Len() > 512 {
+		if strings.Index(buf.String(), "Size") != -1 {
 			return true
 		}
 
 		return false
 	case err := <-done:
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error on 'ipfs dht findprovs': "+err.Error())
+			fmt.Fprintln(os.Stderr, "Error on 'ipfs object stat': "+err.Error())
 			return false
 		}
 
-		if buf.Len() > 512 {
+		if strings.Index(buf.String(), "Size") != -1 {
 			return true
 		}
 	}

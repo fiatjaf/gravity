@@ -32,7 +32,7 @@ func main() {
 	PutCmd.Flags().
 		StringVarP(&putNote, "note", "n", "", "A note to identify this object.")
 	PutCmd.Flags().
-		IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs dht findprovs'.")
+		IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs object stat'.")
 	PutCmd.Flags().Parse(os.Args[1:])
 
 	baseURL := server
