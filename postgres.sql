@@ -33,7 +33,7 @@ CREATE TABLE history (
   cid text NOT NULL,
   prev int,
 
-  FOREIGN KEY (owner, name) REFERENCES head (owner, name)
+  FOREIGN KEY (owner, name) REFERENCES head (owner, name) ON DELETE CASCADE
 );
 
 CREATE INDEX ON history (owner, name);
