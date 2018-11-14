@@ -51,10 +51,22 @@
 			"revisionTime": "2018-04-16T20:45:19Z"
 		},
 		{
+			"checksumSHA1": "DeCJipQ5LSYKWSQBMkvnM2FtDSU=",
+			"path": "github.com/gxed/hashland/keccakpg",
+			"revision": "d9f6b97f8db22dd1e090fd0bbbe98f09cc7dd0a8",
+			"revisionTime": "2018-02-21T19:12:14Z"
+		},
+		{
 			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
 			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "8dPgxCd0YY1wVd8aNeRaWXXhPAM=",
+			"path": "github.com/ipfs/go-cid",
+			"revision": "033594dcd6201e8e8628659c8d584bb800d1734c",
+			"revisionTime": "2018-11-02T23:51:23Z"
 		},
 		{
 			"checksumSHA1": "SEZulQ/Gm4f6P6/c3waZjXxvl0g=",
@@ -87,10 +99,40 @@
 			"revisionTime": "2018-10-16T16:26:27Z"
 		},
 		{
+			"checksumSHA1": "mJQtsTCZGhCmjdFtXBWryZSri/o=",
+			"path": "github.com/minio/blake2b-simd",
+			"revision": "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4",
+			"revisionTime": "2016-07-23T06:10:19Z"
+		},
+		{
+			"checksumSHA1": "iO7HEu7XGg+uYraM56eaNZSmFFE=",
+			"path": "github.com/minio/sha256-simd",
+			"revision": "51976451ce1942acbb55707a983ed232fa027110",
+			"revisionTime": "2018-10-05T18:31:35Z"
+		},
+		{
 			"checksumSHA1": "a58zUNtDH/gEd6F6KI3FqT2iEo0=",
 			"path": "github.com/mitchellh/go-homedir",
 			"revision": "ae18d6b8b3205b561c79e8e5f69bff09736185f4",
 			"revisionTime": "2018-08-24T00:42:36Z"
+		},
+		{
+			"checksumSHA1": "EsER+f+hvVc2mWkpxaxrfYo1QoA=",
+			"path": "github.com/mr-tron/base58/base58",
+			"revision": "c8897612421d88a51012eaa53bf7267686173ae5",
+			"revisionTime": "2018-10-30T09:28:56Z"
+		},
+		{
+			"checksumSHA1": "xaGd4Ib5fMcG2F4g/+r2ZbFuowo=",
+			"path": "github.com/multiformats/go-multibase",
+			"revision": "bb91b53e5695e699a86654d77d03db7bc7506d12",
+			"revisionTime": "2018-09-01T00:32:43Z"
+		},
+		{
+			"checksumSHA1": "nT0TkAExb2MDt7TpbGCKCzlzt+0=",
+			"path": "github.com/multiformats/go-multihash",
+			"revision": "a91e75d03bf4dba801af7b159c8b2aa7b5f47ea8",
+			"revisionTime": "2018-11-02T21:22:46Z"
 		},
 		{
 			"checksumSHA1": "19K+RM0SP2AnGUkuwH5IIpEBqCM=",
@@ -109,6 +151,12 @@
 			"path": "github.com/rs/zerolog/internal/json",
 			"revision": "d2b7a51951c626ef9e7ca5ba8fe1cf1c4adefdba",
 			"revisionTime": "2018-04-19T20:12:29Z"
+		},
+		{
+			"checksumSHA1": "bbilAC3Am0MP1lPfSKblFsIvg4Q=",
+			"path": "github.com/spaolacci/murmur3",
+			"revision": "0d12bf811670bf6a1a63828dfbd003eded177fce",
+			"revisionTime": "2015-08-29T17:28:44Z"
 		},
 		{
 			"checksumSHA1": "ldDS4SHM8qhDCHYfqloFWZ3GXvk=",
@@ -133,6 +181,30 @@
 			"path": "github.com/tidwall/match",
 			"revision": "1731857f09b1f38450e2c12409748407822dc6be",
 			"revisionTime": "2017-10-02T07:59:45Z"
+		},
+		{
+			"checksumSHA1": "nZX82PBDyewMYUOQYI+b/ywdKJk=",
+			"path": "github.com/whyrusleeping/base32",
+			"revision": "c30ac30633ccdabefe87eb12465113f06f1bab75",
+			"revisionTime": "2017-08-28T18:27:44Z"
+		},
+		{
+			"checksumSHA1": "8M/pD2ostkgQtYh4d6QYUvCZh+E=",
+			"path": "golang.org/x/crypto/blake2s",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"revisionTime": "2018-10-17T08:28:34Z"
+		},
+		{
+			"checksumSHA1": "eP6ULb7qY83lyYmM7AfaDIRDeXE=",
+			"path": "golang.org/x/crypto/sha3",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"revisionTime": "2018-10-17T08:28:34Z"
+		},
+		{
+			"checksumSHA1": "REkmyB368pIiip76LiqMLspgCRk=",
+			"path": "golang.org/x/sys/cpu",
+			"revision": "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399",
+			"revisionTime": "2018-11-07T12:45:52Z"
 		}
 	],
 	"rootPath": "github.com/fiatjaf/gravity"

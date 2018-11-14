@@ -10,6 +10,8 @@ import (
 
 	"github.com/badoux/checkmail"
 	"github.com/gorilla/mux"
+	gocid "github.com/ipfs/go-cid"
+	"github.com/tidwall/gjson"
 )
 
 func listNames(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +149,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	err = validateJWT(token, owner, data)
 	if err != nil {
 		log.Warn().Err(err).Str("token", token).Msg("token data is invalid")
-		http.Error(w, "Token data is invalid.", 401)
+		http.Error(w, "Token data is invalid: "+err.Error(), 401)
 		return
 	}
 
@@ -180,38 +182,50 @@ func setName(w http.ResponseWriter, r *http.Request) {
 	owner := mux.Vars(r)["owner"]
 	name := mux.Vars(r)["name"]
 
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Missing CID in the request body.", 400)
-		return
-	}
-	cid := string(data)
-
 	token := r.Header.Get("Token")
 	err = validateJWT(token, owner, map[string]interface{}{
 		"owner": owner,
 		"name":  name,
-		"cid":   cid,
 	})
 	if err != nil {
-		log.Warn().Err(err).Str("owner", owner).Str("name", name).Str("cid", cid).
+		log.Warn().Err(err).Str("owner", owner).Str("name", name).
 			Str("token", token).
 			Msg("token data is invalid")
-		http.Error(w, "Token data is invalid.", 401)
+		http.Error(w, "Token data is invalid: "+err.Error(), 401)
 		return
 	}
 
-	_, err = pg.Exec(`
-        INSERT INTO head (owner, name, cid)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (owner, name) DO
-        UPDATE SET cid = $3, updated_at = now()
-    `, owner, name, cid)
-
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Warn().Err(err).Str("owner", owner).Str("name", name).Str("cid", cid).
-			Msg("error updating record")
-		http.Error(w, "Error updating record: "+err.Error(), 500)
+		http.Error(w, "Missing request body.", 400)
+		return
+	}
+
+	values := gjson.GetManyBytes(data, "cid", "note")
+	cid := values[0].String()
+	note := values[1].String()
+
+	// check cid validity
+	if pcid, err := gocid.Parse(cid); err != nil {
+		http.Error(w, "Invalid CID.", 400)
+		return
+	} else {
+		cid = pcid.String()
+	}
+
+	_, err = pg.Exec(`
+        INSERT INTO head (owner, name, cid, note)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (owner, name) DO
+        UPDATE SET
+          cid = $3,
+          note = CASE WHEN character_length($4) > 0 THEN $4 ELSE head.note END,
+          updated_at = now()
+    `, owner, name, cid, note)
+	if err != nil {
+		log.Warn().Err(err).Str("owner", owner).Str("name", name).
+			Msg("error upserting record")
+		http.Error(w, "Error upserting record: "+err.Error(), 500)
 		return
 	}
 
@@ -231,7 +245,7 @@ func updateName(w http.ResponseWriter, r *http.Request) {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).
 			Str("token", token).
 			Msg("token data is invalid")
-		http.Error(w, "Token data is invalid.", 401)
+		http.Error(w, "Token data is invalid: "+err.Error(), 401)
 		return
 	}
 
@@ -281,7 +295,7 @@ func delName(w http.ResponseWriter, r *http.Request) {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).
 			Str("token", token).
 			Msg("token data is invalid")
-		http.Error(w, "Token data is invalid.", 401)
+		http.Error(w, "Token data is invalid: "+err.Error(), 401)
 		return
 	}
 

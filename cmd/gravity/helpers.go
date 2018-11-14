@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/rsa"
 	"crypto/x509"
 	"errors"
@@ -95,10 +94,7 @@ gotkey:
 }
 
 func makeJWT(key *rsa.PrivateKey, claims jwt.MapClaims) (token string, err error) {
-	return jwt.NewWithClaims(&jwt.SigningMethodRSA{
-		Name: "SHA256",
-		Hash: crypto.SHA256,
-	}, claims).SignedString(key)
+	return jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
 }
 
 func printRecord(w io.Writer, value gjson.Result) {

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"crypto"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -27,14 +25,6 @@ var s Settings
 var r *mux.Router
 var pg *sqlx.DB
 var log = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
-
-func init() {
-	jwt.RegisterSigningMethod("SHA256", func() jwt.SigningMethod {
-		return &jwt.SigningMethodRSA{
-			Name: "SHA256", Hash: crypto.SHA256,
-		}
-	})
-}
 
 func main() {
 	err = envconfig.Process("", &s)

@@ -22,12 +22,15 @@ import (
 var server string
 var c *sling.Sling
 var wait int
+var putNote string
 
 func main() {
 	rootCmd.PersistentFlags().
 		StringVarP(&server, "server", "s", "bigsun.xyz", "Gravity server to use.")
 	rootCmd.PersistentFlags().Parse(os.Args[1:])
 
+	PutCmd.Flags().
+		StringVarP(&putNote, "note", "n", "", "A note to identify this object.")
 	PutCmd.Flags().
 		IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs dht findprovs'.")
 	PutCmd.Flags().Parse(os.Args[1:])
@@ -42,6 +45,7 @@ func main() {
 
 	rootCmd.AddCommand(RegisterCmd)
 	rootCmd.AddCommand(PutCmd)
+	rootCmd.AddCommand(RenameCmd)
 	rootCmd.AddCommand(NoteCmd)
 	rootCmd.AddCommand(BodyCmd)
 	rootCmd.AddCommand(GetCmd)
@@ -170,6 +174,7 @@ var PutCmd = &cobra.Command{
 		parts := strings.Split(args[0], "/")
 		owner := parts[0]
 		name := parts[1]
+		note := putNote
 		cid := args[1]
 
 		// check if we have the file
@@ -183,7 +188,6 @@ var PutCmd = &cobra.Command{
 		token, err := makeJWT(sk, jwt.MapClaims{
 			"owner": owner,
 			"name":  name,
-			"cid":   cid,
 		})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
@@ -191,7 +195,7 @@ var PutCmd = &cobra.Command{
 		}
 
 		req, _ := c.Put("/"+owner+"/"+name).Set("Token", token).
-			Body(bytes.NewBufferString(cid)).Request()
+			BodyJSON(map[string]interface{}{"cid": cid, "note": note}).Request()
 		w, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
@@ -202,6 +206,15 @@ var PutCmd = &cobra.Command{
 			fmt.Fprint(os.Stderr, string(b))
 			return
 		}
+	},
+}
+
+var RenameCmd = &cobra.Command{
+	Use:   "rename [key] [name]",
+	Short: "Set a note for the object given by [key].",
+	Args:  validateArgsRecord("the new name"),
+	Run: func(cmd *cobra.Command, args []string) {
+		updateRecord(args, "name", args[1])
 	},
 }
 

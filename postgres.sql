@@ -5,6 +5,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE head (
+  id serial PRIMARY KEY,
   owner text NOT NULL references users (name),
   name text NOT NULL,
   cid text NOT NULL,
@@ -25,4 +26,4 @@ CREATE INDEX ON head (name);
 CREATE INDEX ON head (cid);
 
 table users;
-table head;
+select id, owner, name, cid, note from head;
