@@ -1,3 +1,7 @@
+:root
+  --bg-color-1 #e42c22
+  --bg-color-2 #210796
+
 *
   box-sizing border-box
   color #eee
@@ -7,6 +11,37 @@ html
   margin 0
   padding 0
   background-color #2f1238
+
+  background linear-gradient(223deg, var(--bg-color-1), var(--bg-color-2))
+  background-size 400% 400%
+  
+  -webkit-animation BackgroundAnimation 0s ease infinite
+  -moz-animation BackgroundAnimation 0s ease infinite
+  animation BackgroundAnimation 0s ease infinite
+  
+  @-webkit-keyframes BackgroundAnimation
+    0%
+      background-position 0% 50%
+    50%
+      background-position 100% 50%
+    100%
+      background-position 0% 50%
+
+  @-moz-keyframes BackgroundAnimation 
+    0%
+      background-position 0% 50%
+    50%
+      background-position 100% 50%
+    100%
+      background-position 0% 50%
+  
+  @keyframes BackgroundAnimation 
+    0%
+      background-position 0% 50%
+    50%
+      background-position 100% 50%
+    100%
+      background-position 0% 50%
 
 body
   max-width 923px
@@ -36,6 +71,7 @@ main#record
   iframe
     width 100%
     min-height 600px
+    background-color white
 
 footer
   margin-top 200px

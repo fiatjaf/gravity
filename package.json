@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "hashbow": "^1.1.1",
     "markdown-it": "^8.4.2",
     "react": "^16.7.0-alpha.0",
     "react-dom": "^16.7.0-alpha.0",

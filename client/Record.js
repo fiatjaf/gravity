@@ -30,6 +30,7 @@ export default function Home(props) {
           <h1>
             <Link to={`/${owner}`}>{owner}</Link>/{name}
           </h1>
+          <aside>{entry && entry.note && <p>{entry.note}</p>}</aside>
         </header>
         {entry && (
           <>

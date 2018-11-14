@@ -1,5 +1,7 @@
 /** @format */
 
+const hashbow = require('hashbow')
+
 import {ToastContainer} from 'react-toastify'
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom'
@@ -52,6 +54,7 @@ export default function Main() {
 
           <Route exact path="/" component={Home} />
           <Route path="/" component={Cleanup} />
+          <Route path="/" component={Colorize} />
           <Route exact path="/:owner" component={User} />
           <Route path="/:owner/:name" component={Record} />
 
@@ -74,4 +77,19 @@ function Cleanup() {
       <Portal to="#how-to" clear />
     </>
   )
+}
+
+function Colorize() {
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--bg-color-1',
+      hashbow(location.href.slice(0, 9))
+    )
+    document.documentElement.style.setProperty(
+      '--bg-color-2',
+      hashbow(location.href.slice(-9), 20, 30)
+    )
+  })
+
+  return null
 }
