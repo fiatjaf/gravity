@@ -53,7 +53,7 @@ export default function Main() {
           </Portal>
 
           <Route exact path="/" component={Home} />
-          <Route path="/" component={Cleanup} />
+          <Route path="/:x" component={Cleanup} />
           <Route path="/" component={Colorize} />
           <Route exact path="/:owner" component={User} />
           <Route path="/:owner/:name" component={Record} />
