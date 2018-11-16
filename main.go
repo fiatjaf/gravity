@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -18,6 +19,7 @@ type Settings struct {
 	ServiceURL  string `envconfig:"SERVICE_URL" required:"true"`
 	Port        string `envconfig:"PORT" required:"true"`
 	PostgresURL string `envconfig:"DATABASE_URL" required:"true"`
+	IconSVG     string `envconfig:"ICON"`
 }
 
 var err error
@@ -43,9 +45,10 @@ func main() {
 
 	// define routes
 	r = mux.NewRouter()
-	r.Path("/favicon.ico").Methods("GET").HandlerFunc(
+	r.Path("/icon.svg").Methods("GET").HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "./public/icon.png")
+			w.Header().Set("Content-Type", "image/svg+xml")
+			fmt.Fprint(w, s.IconSVG)
 			return
 		})
 	r.Path("/{owner}").Methods("POST").HandlerFunc(registerUser)
