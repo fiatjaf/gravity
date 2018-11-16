@@ -27,8 +27,7 @@ CREATE INDEX ON head (cid);
 
 CREATE TABLE history (
   id serial PRIMARY KEY,
-  owner text NOT NULL,
-  name text NOT NULL,
+  record_id int NOT NULL REFERENCES head(id) ON DELETE CASCADE,
   set_at timestamp NOT NULL DEFAULT now(),
   cid text NOT NULL,
   prev int,
@@ -44,12 +43,12 @@ CREATE OR REPLACE FUNCTION update_history() RETURNS trigger AS $$
   BEGIN
     IF TG_OP = 'UPDATE' THEN
       SELECT id INTO previous FROM history
-        WHERE owner = NEW.owner AND name = NEW.name
+        WHERE record_id = NEW.id
         ORDER BY id DESC LIMIT 1;
     END IF;
 
-    INSERT INTO history (owner, name, cid, prev)
-      VALUES (NEW.owner, NEW.name, NEW.cid, previous);
+    INSERT INTO history (record_id, cid, prev)
+      VALUES (NEW.id, NEW.cid, previous);
 
     RETURN NULL;
   END;

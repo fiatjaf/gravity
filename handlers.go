@@ -81,16 +81,17 @@ func getName(w http.ResponseWriter, r *http.Request) {
     `
 	if r.URL.Query().Get("full") == "1" {
 		query = `
-            WITH h AS (
-                SELECT array_to_string(array_agg(cid || '|' || set_at), '~') AS r
-                FROM history
+            WITH df AS (
+                SELECT id AS rid, owner, name, cid, note, body
+                FROM head
                 WHERE owner = $1 AND name = $2
-                GROUP BY id
-                ORDER BY id DESC
+            ), ph AS (
+                SELECT array_agg(cid || '|' || set_at ORDER BY id DESC) AS r
+                FROM history
+                WHERE record_id = (SELECT rid FROM df)
             )
-            SELECT owner, name, cid, note, body, (SELECT r FROM h) AS raw_history
-            FROM head
-            WHERE owner = $1 AND name = $2
+            SELECT owner, name, cid, note, body, array_to_string(r, '~') AS raw_history
+            FROM df, ph;
         `
 	}
 
