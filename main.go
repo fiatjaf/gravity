@@ -88,9 +88,11 @@ func main() {
 
 func switchHTMLJSON(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
 		if strings.Contains(r.Header.Get("Accept"), "text/html") {
 			http.ServeFile(w, r, "static/index.html")
 		} else {
+			w.Header().Set("Content-Type", "application/json")
 			next(w, r)
 		}
 	}
