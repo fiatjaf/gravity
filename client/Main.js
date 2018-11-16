@@ -64,11 +64,11 @@ export default function Main() {
           <Route exact path="/:owner" component={User} />
           <Route path="/:owner/:name" component={Record} />
 
-          <Portal to="footer" clear>
-            <p>
+          <Portal to="footer .provider" clear>
+            <>
               <a href={service.provider.url}>{service.provider.name}</a>,{' '}
               {new Date().getFullYear()}
-            </p>
+            </>
           </Portal>
         </GlobalContext.Provider>
       </Router>
