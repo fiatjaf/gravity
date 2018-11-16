@@ -15,7 +15,6 @@ export default function RecordRow({owner, name, cid, note}) {
     if (window.ipfs) {
       window.ipfs.dht
         .findprovs(cid)
-        .catch(err => console.warn('error finding provs for ' + cid, err))
         .then(peerInfos => {
           setNProvs(
             [...new Set(peerInfos.map(p => p.ID).filter(x => x))].length
@@ -27,6 +26,7 @@ export default function RecordRow({owner, name, cid, note}) {
             }
           }
         })
+        .catch(err => console.warn('error finding provs for ' + cid, err))
     }
   }, [])
 

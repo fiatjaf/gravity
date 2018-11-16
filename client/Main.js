@@ -11,9 +11,10 @@ import Home from './Home'
 import Record from './Record'
 import User from './User'
 
-const service = {
+export const service = {
   name: process.env.SERVICE_NAME || 'Planet',
   url: process.env.SERVICE_URL || 'https://github.com/fiatjaf/gravity',
+  icon: process.env.ICON,
   provider: {
     name: process.env.SERVICE_PROVIDER_NAME || 'gravity',
     url:
@@ -43,6 +44,11 @@ export default function Main() {
             {service.name} - IPFS Gravitational Body
           </Portal>
           <Portal to="header > h1" clear>
+            <Link
+              to="/"
+              className="icon"
+              dangerouslySetInnerHTML={{__html: service.icon}}
+            />
             <Link to="/">{service.name}</Link>
           </Portal>
           <Portal to="header aside .name" clear>
