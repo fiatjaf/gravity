@@ -97,7 +97,12 @@ func makeJWT(key *rsa.PrivateKey, claims jwt.MapClaims) (token string, err error
 	return jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
 }
 
-func printRecord(w io.Writer, value gjson.Result) {
+func printRecord(w io.Writer, value gjson.Result, quiet bool) {
+	if quiet {
+		fmt.Fprintln(w, value.Get("cid").String())
+		return
+	}
+
 	fmt.Fprintln(w, strings.Join([]string{
 		value.Get("owner").String() + "/" + value.Get("name").String(),
 		value.Get("cid").String(),

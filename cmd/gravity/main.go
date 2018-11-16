@@ -23,11 +23,16 @@ var server string
 var c *sling.Sling
 var wait int
 var putNote string
+var quiet bool
 
 func main() {
 	rootCmd.PersistentFlags().
 		StringVarP(&server, "server", "s", "bigsun.xyz", "Gravity server to use.")
 	rootCmd.PersistentFlags().Parse(os.Args[1:])
+
+	GetCmd.Flags().
+		BoolVarP(&quiet, "quiet", "Q", false, "Print only final hash.")
+	GetCmd.Flags().Parse(os.Args[1:])
 
 	PutCmd.Flags().
 		StringVarP(&putNote, "note", "n", "", "A note to identify this object.")
@@ -150,11 +155,11 @@ var GetCmd = &cobra.Command{
 
 		if j.IsArray() {
 			j.ForEach(func(_, value gjson.Result) bool {
-				printRecord(tw, value)
+				printRecord(tw, value, quiet)
 				return true
 			})
 		} else if j.IsObject() {
-			printRecord(tw, j)
+			printRecord(tw, j, quiet)
 		}
 
 		tw.Flush()
