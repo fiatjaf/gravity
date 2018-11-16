@@ -196,3 +196,21 @@ func updateRecord(args []string, key string, value interface{}) {
 		return
 	}
 }
+
+func getCID(key string) string {
+	parts := strings.Split(key, "/")
+	owner := parts[0]
+	name := parts[1]
+	req, _ := c.Get("/" + owner + "/" + name).Request()
+
+	w, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+		return ""
+	}
+
+	b, _ := ioutil.ReadAll(w.Body)
+	j := gjson.ParseBytes(b)
+
+	return j.Get("cid").String()
+}

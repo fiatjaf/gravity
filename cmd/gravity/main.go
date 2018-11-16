@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"text/tabwriter"
 
@@ -54,6 +55,8 @@ func main() {
 	rootCmd.AddCommand(NoteCmd)
 	rootCmd.AddCommand(BodyCmd)
 	rootCmd.AddCommand(GetCmd)
+	rootCmd.AddCommand(ListCmd)
+	rootCmd.AddCommand(StatCmd)
 	rootCmd.AddCommand(DelCmd)
 	rootCmd.AddCommand(versionCmd)
 
@@ -163,6 +166,55 @@ var GetCmd = &cobra.Command{
 		}
 
 		tw.Flush()
+	},
+}
+
+var ListCmd = &cobra.Command{
+	Use:   "list [key[/path]]",
+	Short: "Get a hash from the gravity server and call `ipfs ls` on it or in a subpath of it.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		parts := strings.Split(args[0], "/")
+		key := parts[0] + "/" + parts[1]
+
+		cid := getCID(key)
+		if cid == "" {
+			return
+		}
+
+		cmdls := exec.Command("ipfs", "ls", cid+"/"+strings.Join(parts[2:], "/"))
+		cmdls.Stderr = os.Stderr
+		cmdls.Stdout = os.Stdout
+		err := cmdls.Run()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Unable to run 'ipfs ls': "+err.Error())
+			return
+		}
+	},
+}
+
+var StatCmd = &cobra.Command{
+	Use:   "stat [key[/path]]",
+	Short: "Get a hash from the gravity server and call `ipfs object stat` on it or in a subpath of it.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		parts := strings.Split(args[0], "/")
+		key := parts[0] + "/" + parts[1]
+
+		cid := getCID(key)
+		if cid == "" {
+			return
+		}
+
+		cmdstat := exec.Command("ipfs", "object", "stat",
+			cid+"/"+strings.Join(parts[2:], "/"))
+		cmdstat.Stderr = os.Stderr
+		cmdstat.Stdout = os.Stdout
+		err := cmdstat.Run()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Unable to run 'ipfs object stat': "+err.Error())
+			return
+		}
 	},
 }
 
