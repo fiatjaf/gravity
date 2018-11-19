@@ -268,7 +268,7 @@ var PutCmd = &cobra.Command{
 
 var RenameCmd = &cobra.Command{
 	Use:   "rename [key] [name]",
-	Short: "Set a note for the object given by [key].",
+	Short: "Rename a record.",
 	Args:  validateArgsRecord("the new name"),
 	Run: func(cmd *cobra.Command, args []string) {
 		updateRecord(args, "name", args[1])
