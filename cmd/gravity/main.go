@@ -56,7 +56,6 @@ func main() {
 	rootCmd.AddCommand(NoteCmd)
 	rootCmd.AddCommand(BodyCmd)
 	rootCmd.AddCommand(GetCmd)
-	rootCmd.AddCommand(ListCmd)
 	rootCmd.AddCommand(StatCmd)
 	rootCmd.AddCommand(DelCmd)
 	rootCmd.AddCommand(versionCmd)
@@ -132,10 +131,9 @@ var RegisterCmd = &cobra.Command{
 
 var GetCmd = &cobra.Command{
 	Use:        "get [key or cid]",
-	Aliases:    []string{"query", "fetch"},
+	Aliases:    []string{"query", "fetch", "list", "ls"},
 	SuggestFor: []string{"find"},
 	Short:      "Get something from the gravity server",
-	Args:       validateArgKey,
 	Example: `~> gravity get fiatjaf/gravity
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
 
@@ -148,6 +146,18 @@ fiatjaf/fiatjaf.alhur.es    QmT5vWxZ1qTePvZg9NJAJDBJtZ81UGu9MoVbsmJoc946ho     m
 
 ~> gravity get QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
+
+~> gravity get fiatjaf/cof/
+zdj7WiDR1mUKjC7PU5aVTU3s3Dkd9UW2pQe9UsXPi4WQ62yTt 13680450440 aulas/
+zdj7Wf5jP4JgV9HLUjtTJx2mqFSpwWNoK3EtpMT2myUjdBEpo 9690704     transcrições/
+
+~> gravity get fiatjaf/cof/aulas/
+zdj7WWfpuLo8qJcM2S3WBx9Coo7Gqy8EzBB77F768E5pX5uc4 13538149  000/
+zdj7WjJMeYNUYxTSUFikWiDVmAwFvExzKjBZyvC71hrrx5V6x 36802688  001/
+zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
+zdj7Wha7HE9nzvF5971kFKLs7GzPqo6WfB61qJ4JitvpvgNo9 11568302  003/
+zdj7Wc76EGZXcmTvJp3V9PGaxk6nxuef2xWtb87zbVY3FoAzB 46545317  004/
+zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		var req *http.Request
@@ -175,53 +185,34 @@ fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled bin
 		tw := tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
 
 		if j.IsArray() {
+			// it's a list of all the records, or all the records for one user
 			j.ForEach(func(_, value gjson.Result) bool {
 				printRecord(tw, value, quiet)
 				return true
 			})
 		} else if j.IsObject() {
-			printRecord(tw, j, quiet)
+			// it's just one record
+			parts := strings.Split(args[0], "/")
+
+			if len(parts) > 2 {
+				// command was called with more than two strings in the path,
+				// so we'll call `ipfs ls` on the result
+				cid := j.Get("cid").String()
+				cmdls := exec.Command("ipfs", "ls", cid+"/"+strings.Join(parts[2:], "/"))
+				cmdls.Stderr = os.Stderr
+				cmdls.Stdout = os.Stdout
+				err := cmdls.Run()
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Unable to run 'ipfs ls': "+err.Error())
+					return
+				}
+			} else {
+				// just print the record data
+				printRecord(tw, j, quiet)
+			}
 		}
 
 		tw.Flush()
-	},
-}
-
-var ListCmd = &cobra.Command{
-	Use:        "list [key[/path]]",
-	Aliases:    []string{"ls"},
-	SuggestFor: []string{"find"},
-	Short:      "Get a hash from the gravity server and call `ipfs ls` on it or in a subpath of it.",
-	Args:       validateArgKey,
-	Example: `~> gravity list fiatjaf/cof
-zdj7WiDR1mUKjC7PU5aVTU3s3Dkd9UW2pQe9UsXPi4WQ62yTt 13680450440 aulas/
-zdj7Wf5jP4JgV9HLUjtTJx2mqFSpwWNoK3EtpMT2myUjdBEpo 9690704     transcrições/
-
-~> gravity list fiatjaf/cof/aulas
-zdj7WWfpuLo8qJcM2S3WBx9Coo7Gqy8EzBB77F768E5pX5uc4 13538149  000/
-zdj7WjJMeYNUYxTSUFikWiDVmAwFvExzKjBZyvC71hrrx5V6x 36802688  001/
-zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
-zdj7Wha7HE9nzvF5971kFKLs7GzPqo6WfB61qJ4JitvpvgNo9 11568302  003/
-zdj7Wc76EGZXcmTvJp3V9PGaxk6nxuef2xWtb87zbVY3FoAzB 46545317  004/
-zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
-`,
-	Run: func(cmd *cobra.Command, args []string) {
-		parts := strings.Split(args[0], "/")
-		key := parts[0] + "/" + parts[1]
-
-		cid := getCID(key)
-		if cid == "" {
-			return
-		}
-
-		cmdls := exec.Command("ipfs", "ls", cid+"/"+strings.Join(parts[2:], "/"))
-		cmdls.Stderr = os.Stderr
-		cmdls.Stdout = os.Stdout
-		err := cmdls.Run()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Unable to run 'ipfs ls': "+err.Error())
-			return
-		}
 	},
 }
 
