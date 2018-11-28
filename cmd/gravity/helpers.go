@@ -150,17 +150,12 @@ func checkCIDExistence(cid string, wait int) bool {
 	return false
 }
 
-func validateArgsRecord(second string) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if len(args) != 2 {
-			return errors.New("2 arguments are required, username/recordname and " + second + ".")
-		}
-		parts := strings.Split(args[0], "/")
-		if parts[0] == "" || parts[1] == "" {
-			return errors.New("First argument must be username/recordname.")
-		}
-		return nil
+func validateArgKey(cmd *cobra.Command, args []string) error {
+	parts := strings.Split(args[0], "/")
+	if parts[0] == "" || parts[1] == "" {
+		return errors.New("First argument must be in the format <username>/<recordname>.")
 	}
+	return nil
 }
 
 func updateRecord(args []string, key string, value interface{}) {

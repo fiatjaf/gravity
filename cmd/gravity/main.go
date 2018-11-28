@@ -16,6 +16,7 @@ import (
 	"github.com/badoux/checkmail"
 	"github.com/dghubble/sling"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gumieri/open-in-editor"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 )
@@ -75,14 +76,14 @@ gravity is a centralized index for all files distributed over IPFS.
 
 You can use gravity as a hub to which you can announce data you've made available through IPFS or in which you'll find interesting stuff from others to pin.
     `,
-	Version: "v0",
+	Version: "v1",
 }
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number of gravity",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("gravity v0")
+		fmt.Println("gravity " + rootCmd.Version)
 	},
 }
 
@@ -130,13 +131,30 @@ var RegisterCmd = &cobra.Command{
 }
 
 var GetCmd = &cobra.Command{
-	Use:   "get [key or cid]",
-	Short: "Get something from the gravity server",
-	Args:  cobra.ExactArgs(1),
+	Use:        "get [key or cid]",
+	Aliases:    []string{"query", "fetch"},
+	SuggestFor: []string{"find"},
+	Short:      "Get something from the gravity server",
+	Args:       validateArgKey,
+	Example: `~> gravity get fiatjaf/gravity
+fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
+
+~> gravity get fiatjaf/
+fiatjaf/videos              zdj7Wa7HGxHGfAb1o9xRFDhbSjuWqVBAaavRw5WX4BEVV8YD5  some videos worth saving.
+fiatjaf/olavodecarvalho.org zdj7WetgxoFSiPJSKCn9asF77TLh7Kb3eDGpgh4VPJm93zssA  olavodecarvalho.org old website.
+fiatjaf/gravity             QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa     precompiled binaries for the gravity CLI tool.
+fiatjaf/bitcoin.pdf         QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj     
+fiatjaf/fiatjaf.alhur.es    QmT5vWxZ1qTePvZg9NJAJDBJtZ81UGu9MoVbsmJoc946ho     my personal website.
+
+~> gravity get QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
+fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var req *http.Request
 
-		if strings.IndexByte(args[0], '/') == -1 {
+		if len(args) == 0 {
+			req, _ = c.Get("/").Request()
+		} else if strings.IndexByte(args[0], '/') == -1 {
 			cid := args[0]
 			req, _ = c.Get("/").QueryStruct(CIDQuery{cid}).Request()
 		} else {
@@ -170,9 +188,23 @@ var GetCmd = &cobra.Command{
 }
 
 var ListCmd = &cobra.Command{
-	Use:   "list [key[/path]]",
-	Short: "Get a hash from the gravity server and call `ipfs ls` on it or in a subpath of it.",
-	Args:  cobra.ExactArgs(1),
+	Use:        "list [key[/path]]",
+	Aliases:    []string{"ls"},
+	SuggestFor: []string{"find"},
+	Short:      "Get a hash from the gravity server and call `ipfs ls` on it or in a subpath of it.",
+	Args:       validateArgKey,
+	Example: `~> gravity list fiatjaf/cof
+zdj7WiDR1mUKjC7PU5aVTU3s3Dkd9UW2pQe9UsXPi4WQ62yTt 13680450440 aulas/
+zdj7Wf5jP4JgV9HLUjtTJx2mqFSpwWNoK3EtpMT2myUjdBEpo 9690704     transcrições/
+
+~> gravity list fiatjaf/cof/aulas
+zdj7WWfpuLo8qJcM2S3WBx9Coo7Gqy8EzBB77F768E5pX5uc4 13538149  000/
+zdj7WjJMeYNUYxTSUFikWiDVmAwFvExzKjBZyvC71hrrx5V6x 36802688  001/
+zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
+zdj7Wha7HE9nzvF5971kFKLs7GzPqo6WfB61qJ4JitvpvgNo9 11568302  003/
+zdj7Wc76EGZXcmTvJp3V9PGaxk6nxuef2xWtb87zbVY3FoAzB 46545317  004/
+zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		parts := strings.Split(args[0], "/")
 		key := parts[0] + "/" + parts[1]
@@ -194,9 +226,17 @@ var ListCmd = &cobra.Command{
 }
 
 var StatCmd = &cobra.Command{
-	Use:   "stat [key[/path]]",
-	Short: "Get a hash from the gravity server and call `ipfs object stat` on it or in a subpath of it.",
-	Args:  cobra.ExactArgs(1),
+	Use:     "stat [key[/path]]",
+	Aliases: []string{"info"},
+	Short:   "Get a hash from the gravity server and call `ipfs object stat` on it or in a subpath of it.",
+	Args:    cobra.ExactArgs(1),
+	Example: `~> gravity stat fiatjaf/bitcoin.pdf
+NumLinks: 0
+BlockSize: 184306
+LinksSize: 4
+DataSize: 184302
+CumulativeSize: 184306
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		parts := strings.Split(args[0], "/")
 		key := parts[0] + "/" + parts[1]
@@ -219,9 +259,10 @@ var StatCmd = &cobra.Command{
 }
 
 var PutCmd = &cobra.Command{
-	Use:   "put [key] [ipfs cid]",
-	Short: "Put something on the gravity server",
-	Args:  validateArgsRecord("hash"),
+	Use:     "put [key] [ipfs cid]",
+	Short:   "Put something on the gravity server",
+	Args:    validateArgKey,
+	Example: `~> gravity put fiatjaf/bitcoin.pdf QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj`,
 	Run: func(cmd *cobra.Command, args []string) {
 		sk, err := getPrivateKey()
 		if err != nil {
@@ -269,7 +310,7 @@ var PutCmd = &cobra.Command{
 var RenameCmd = &cobra.Command{
 	Use:   "rename [key] [name]",
 	Short: "Rename a record.",
-	Args:  validateArgsRecord("the new name"),
+	Args:  validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		updateRecord(args, "name", args[1])
 	},
@@ -278,29 +319,62 @@ var RenameCmd = &cobra.Command{
 var NoteCmd = &cobra.Command{
 	Use:   "note [key] [note]",
 	Short: "Set a note for the object given by [key].",
-	Args:  validateArgsRecord("note"),
+	Args:  validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		updateRecord(args, "note", args[1])
 	},
 }
 
 var BodyCmd = &cobra.Command{
-	Use:   "body [key] [filepath]",
-	Short: "Set a markdown body for the object given by [key].",
-	Args:  validateArgsRecord("the file path of where the body contents are"),
+	Use:     "body [key]",
+	Aliases: []string{"edit"},
+	Short:   "Edit the Markdown body for the object given by [key] in your local editor.",
+	Args:    validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		bbody, err := ioutil.ReadFile(args[1])
+		program := os.Getenv("EDITOR")
+		if program == "" {
+			program = "editor"
+		}
+		editor := openineditor.Editor{Command: program}
+
+		// fetch current contents
+		parts := strings.Split(args[0], "/")
+		owner := parts[0]
+		name := parts[1]
+		req, _ := c.Get("/" + owner + "/" + name + "?full=1").Request()
+		w, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed read file '"+args[1]+"': "+err.Error())
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+			return
+		}
+		b, _ := ioutil.ReadAll(w.Body)
+		contents := gjson.GetBytes(b, "body").String()
+		if contents == "" {
+			contents += `## ` + name + `
+
+An amazing thing.
+`
+		}
+
+		f := &openineditor.File{FileName: name, Content: []byte(contents)}
+		err = f.CreateInTempDir()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to create temporary file: "+err.Error())
 			return
 		}
 
-		updateRecord(args, "body", string(bbody))
+		err = editor.OpenTempFile(f)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to open file for editing: "+err.Error())
+			return
+		}
+
+		updateRecord(args, "body", string(f.Content))
 	},
 }
 
 var DelCmd = &cobra.Command{
-	Use:   "del",
+	Use:   "del [key]",
 	Short: "Delete something from the gravity server",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
