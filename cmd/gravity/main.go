@@ -26,6 +26,7 @@ var c *sling.Sling
 var wait int
 var putNote string
 var quiet bool
+var showVersions bool
 
 func main() {
 	rootCmd.PersistentFlags().
@@ -34,6 +35,8 @@ func main() {
 
 	GetCmd.Flags().
 		BoolVarP(&quiet, "quiet", "Q", false, "Print only final hash.")
+	GetCmd.Flags().
+		BoolVarP(&showVersions, "history", "H", false, "Show old versions.")
 	GetCmd.Flags().Parse(os.Args[1:])
 
 	PutCmd.Flags().
@@ -137,6 +140,14 @@ var GetCmd = &cobra.Command{
 	Example: `~> gravity get fiatjaf/gravity
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
 
+~> gravity get fiatjaf/bitcoin.pdf -Q
+QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj
+
+~> gravity get fiatjaf/gravity --history
+fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.                                                                               
+    0   2018-11-16 03:13:32.176537  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
+    -1  2018-11-14 20:34:36.67102   QmVQ3zYTPnnu7iggGh7Cpr9naL7VDZ8x8cWd2EMexDv3w
+
 ~> gravity get fiatjaf/
 fiatjaf/videos              zdj7Wa7HGxHGfAb1o9xRFDhbSjuWqVBAaavRw5WX4BEVV8YD5  some videos worth saving.
 fiatjaf/olavodecarvalho.org zdj7WetgxoFSiPJSKCn9asF77TLh7Kb3eDGpgh4VPJm93zssA  olavodecarvalho.org old website.
@@ -147,17 +158,14 @@ fiatjaf/fiatjaf.alhur.es    QmT5vWxZ1qTePvZg9NJAJDBJtZ81UGu9MoVbsmJoc946ho     m
 ~> gravity get QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
 
-~> gravity get fiatjaf/cof/
+~> gravity list fiatjaf/cof/
 zdj7WiDR1mUKjC7PU5aVTU3s3Dkd9UW2pQe9UsXPi4WQ62yTt 13680450440 aulas/
 zdj7Wf5jP4JgV9HLUjtTJx2mqFSpwWNoK3EtpMT2myUjdBEpo 9690704     transcrições/
 
-~> gravity get fiatjaf/cof/aulas/
+~> gravity list fiatjaf/cof/aulas/
 zdj7WWfpuLo8qJcM2S3WBx9Coo7Gqy8EzBB77F768E5pX5uc4 13538149  000/
 zdj7WjJMeYNUYxTSUFikWiDVmAwFvExzKjBZyvC71hrrx5V6x 36802688  001/
 zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
-zdj7Wha7HE9nzvF5971kFKLs7GzPqo6WfB61qJ4JitvpvgNo9 11568302  003/
-zdj7Wc76EGZXcmTvJp3V9PGaxk6nxuef2xWtb87zbVY3FoAzB 46545317  004/
-zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		var req *http.Request
@@ -166,12 +174,16 @@ zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
 			req, _ = c.Get("/").Request()
 		} else if strings.IndexByte(args[0], '/') == -1 {
 			cid := args[0]
-			req, _ = c.Get("/").QueryStruct(CIDQuery{cid}).Request()
+			req, _ = c.Get("/?cid=" + cid).Request()
 		} else {
 			parts := strings.Split(args[0], "/")
 			owner := parts[0]
 			name := parts[1]
-			req, _ = c.Get("/" + owner + "/" + name).Request()
+			path := "/" + owner + "/" + name
+			if showVersions {
+				path += "?full=1"
+			}
+			req, _ = c.Get(path).Request()
 		}
 
 		w, err := http.DefaultClient.Do(req)
@@ -208,7 +220,24 @@ zdj7WgtpsvgDyhKPVU1CoXqgkYy6XTgU5FRjwLxX8eRFt1vZu 42870732  005/
 				}
 			} else {
 				// just print the record data
+				if showVersions {
+					quiet = false
+				}
+
 				printRecord(tw, j, quiet)
+
+				if showVersions {
+					// flush previous and start a new tabwriter for this
+					tw.Flush()
+					tw = tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
+
+					t := 0
+					j.Get("history").ForEach(func(_, h gjson.Result) bool {
+						printVersion(tw, t, h)
+						t--
+						return true
+					})
+				}
 			}
 		}
 

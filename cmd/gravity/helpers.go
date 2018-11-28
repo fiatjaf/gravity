@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,10 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 )
-
-type CIDQuery struct {
-	CID string `url:"cid"`
-}
 
 func getIPFSDir() string {
 	ipfspath := os.Getenv("IPFS_PATH")
@@ -107,6 +104,15 @@ func printRecord(w io.Writer, value gjson.Result, quiet bool) {
 		value.Get("owner").String() + "/" + value.Get("name").String(),
 		value.Get("cid").String(),
 		value.Get("note").String(),
+	}, "\t"))
+}
+
+func printVersion(w io.Writer, t int, value gjson.Result) {
+	fmt.Fprintln(w, strings.Join([]string{
+		"  ",
+		strconv.Itoa(t),
+		value.Get("date").String(),
+		value.Get("cid").String(),
 	}, "\t"))
 }
 
