@@ -124,6 +124,23 @@ func getName(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func redirectName(w http.ResponseWriter, r *http.Request) {
+	owner := mux.Vars(r)["owner"]
+	name := mux.Vars(r)["name"]
+
+	var cid string
+	err = pg.Get(&cid, `
+        SELECT cid FROM head
+        WHERE owner = $1 AND name = $2
+    `, owner, name)
+	if err == sql.ErrNoRows {
+		http.Error(w, "Couldn't find object.", 404)
+		return
+	}
+
+	http.Redirect(w, r, "https://cloudflare-ipfs.com/ipfs/"+cid, 302)
+}
+
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	owner := mux.Vars(r)["owner"]
 

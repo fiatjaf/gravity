@@ -76,6 +76,8 @@ func main() {
 	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").HandlerFunc(
 		switchHTMLJSON(getName),
 	)
+	r.Path("/r/{owner}/{name}").Methods("GET").HandlerFunc(redirectName)
+	r.Path("/r/{owner}/{name}/").Methods("GET").HandlerFunc(redirectName)
 	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
 
 	// start the server
