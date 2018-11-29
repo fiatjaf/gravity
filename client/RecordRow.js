@@ -33,11 +33,20 @@ export default function RecordRow({owner, name, cid, note}) {
   return (
     <tr>
       <td>
-        <Link to={`/${owner}`}>{owner}</Link>/
-        <Link to={`/${owner}/${name}`}>{name}</Link>
+        <Link className="dirlink" to={`/${owner}`}>
+          {owner}
+        </Link>
+        /
+        <Link className="recordlink" to={`/${owner}/${name}`}>
+          {name}
+        </Link>
       </td>
       <td>
-        <a target="_blank" href={`https://ipfs.io/ipfs/${cid}`}>
+        <a
+          className="cidlink"
+          target="_blank"
+          href={`https://ipfs.io/ipfs/${cid}`}
+        >
           {cid}
         </a>
       </td>

@@ -27,7 +27,10 @@ export default function Home(props) {
       <main id="record">
         <header>
           <h1>
-            <Link to={`/${owner}`}>{owner}</Link>/{name}
+            <Link className="dirlink" to={`/${owner}`}>
+              {owner}
+            </Link>
+            /{name}
           </h1>
           <aside>{entry && entry.note && <p>{entry.note}</p>}</aside>
         </header>
@@ -52,6 +55,7 @@ export default function Home(props) {
                       >
                         <td>
                           <a
+                            className="cidlink"
                             href={`https://ipfs.io/ipfs/${cid}`}
                             target="_blank"
                           >

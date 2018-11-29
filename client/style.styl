@@ -5,7 +5,7 @@
 *
   box-sizing border-box
   color #eee
-  font-family monospace
+  font-family 'Noto Sans SC', monospace;
 
 html
   margin 0
@@ -44,7 +44,7 @@ html
       background-position 0% 50%
 
 body
-  max-width 923px
+  max-width 1523px
   margin 15px auto
   padding 10px
 
@@ -67,6 +67,23 @@ header
     max-width 50px
     margin 0 12px
 
+.dirlink, .recordlink
+  text-decoration none
+  font-weight bold
+  margin 0 2px
+
+  &:hover
+    text-decoration underline
+
+.cidlink
+  font-family monospace
+  text-decoration none
+  border 1px dotted
+  padding 5px
+
+  &:hover
+    background-color rgba(221, 221, 221, 0.21)
+
 table
   font-size 104%
 
@@ -78,7 +95,17 @@ main#record
     margin 20px 0
     padding 12px 15px
     border-radius 8px
-    background-color rgba(255, 255, 255, 0.2)
+    background-color rgba(0, 0, 0, 0.2)
+
+    pre
+      padding 5px 4px
+      border-radius 5px
+      background rgba(255, 255, 255, 0.1)
+      word-wrap break-word
+      white-space pre-wrap
+
+    code
+      font-family monospace
 
   iframe
     width 100%
