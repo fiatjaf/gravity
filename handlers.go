@@ -143,17 +143,15 @@ func redirectName(w http.ResponseWriter, r *http.Request) {
 
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	owner := mux.Vars(r)["owner"]
-
-	// register a new user at /owner
+	email := r.Header.Get("Email")
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Missing public key.", 400)
 		return
 	}
-
-	data, err := ioutil.ReadAll(r.Body)
 	pk := string(data)
-	email := r.Header.Get("Email")
 
+	// register a new user at /owner
 	if err := checkmail.ValidateFormat(email); err != nil {
 		log.Warn().Err(err).Str("email", email).
 			Msg("invalid email address")
