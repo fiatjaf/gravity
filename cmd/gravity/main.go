@@ -61,7 +61,6 @@ func main() {
 	rootCmd.AddCommand(GetCmd)
 	rootCmd.AddCommand(StatCmd)
 	rootCmd.AddCommand(DelCmd)
-	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -78,15 +77,7 @@ gravity is a centralized index for all files distributed over IPFS.
 
 You can use gravity as a hub to which you can announce data you've made available through IPFS or in which you'll find interesting stuff from others to pin.
     `,
-	Version: "v1",
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number of gravity",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("gravity " + rootCmd.Version)
-	},
+	Version: "v2",
 }
 
 var RegisterCmd = &cobra.Command{
