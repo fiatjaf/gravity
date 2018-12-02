@@ -55,7 +55,7 @@ export default function Main() {
             {service.name.toLowerCase()}
           </Portal>
           <Portal to=".bin-link" clear>
-            <Link to="/fiatjaf/gravity-binaries">fiatjaf/gravity-binaries</Link>
+            <Link to="/fiatjaf/gravity">fiatjaf/gravity</Link>
           </Portal>
 
           <Route exact path="/" component={Home} />
