@@ -108,9 +108,14 @@ func printRecord(w io.Writer, value gjson.Result, quiet bool) {
 }
 
 func printVersion(w io.Writer, t int, value gjson.Result) {
+	nseq := strconv.Itoa(t)
+	if t == 0 {
+		nseq = " 0"
+	}
+
 	fmt.Fprintln(w, strings.Join([]string{
 		"  ",
-		strconv.Itoa(t),
+		nseq,
 		value.Get("date").String(),
 		value.Get("cid").String(),
 	}, "\t"))

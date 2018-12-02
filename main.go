@@ -53,31 +53,41 @@ func main() {
 		})
 	r.Path("/{owner}").Methods("POST").HandlerFunc(registerUser)
 	r.Path("/{owner}/").Methods("POST").HandlerFunc(registerUser)
+
 	r.Path("/{owner}").Methods("PATCH").HandlerFunc(updateUser)
 	r.Path("/{owner}/").Methods("PATCH").HandlerFunc(updateUser)
+
 	r.Path("/{owner}/{name}").Methods("PUT").HandlerFunc(setName)
 	r.Path("/{owner}/{name}/").Methods("PUT").HandlerFunc(setName)
+
 	r.Path("/{owner}/{name}").Methods("PATCH").HandlerFunc(updateName)
 	r.Path("/{owner}/{name}/").Methods("PATCH").HandlerFunc(updateName)
+
 	r.Path("/{owner}/{name}").Methods("DELETE").HandlerFunc(delName)
 	r.Path("/{owner}/{name}/").Methods("DELETE").HandlerFunc(delName)
-	r.Path("/").Methods("GET").HandlerFunc(
-		switchHTMLJSON(listNames),
-	)
-	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(
-		switchHTMLJSON(listNames),
-	)
-	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").HandlerFunc(
-		switchHTMLJSON(listNames),
-	)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}").Methods("GET").HandlerFunc(
-		switchHTMLJSON(getName),
-	)
-	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").HandlerFunc(
-		switchHTMLJSON(getName),
-	)
+
+	r.Path("/").Methods("GET").Queries("cid", "").
+		HandlerFunc(switchHTMLJSON(queryCIDs))
+	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").Queries("cid", "").
+		HandlerFunc(switchHTMLJSON(queryCIDs))
+	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").Queries("cid", "").
+		HandlerFunc(switchHTMLJSON(queryCIDs))
+
+	r.Path("/").Methods("GET").
+		HandlerFunc(switchHTMLJSON(listNames))
+	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").
+		HandlerFunc(switchHTMLJSON(listNames))
+	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").
+		HandlerFunc(switchHTMLJSON(listNames))
+
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}").Methods("GET").
+		HandlerFunc(switchHTMLJSON(getName))
+	r.Path("/{owner:[\\d\\w-]+}/{name:[\\d\\w-.]+}/").Methods("GET").
+		HandlerFunc(switchHTMLJSON(getName))
+
 	r.Path("/r/{owner}/{name}").Methods("GET").HandlerFunc(redirectName)
 	r.Path("/r/{owner}/{name}/").Methods("GET").HandlerFunc(redirectName)
+
 	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
 
 	// start the server

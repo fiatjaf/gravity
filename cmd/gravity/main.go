@@ -136,8 +136,9 @@ QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj
 
 ~> gravity get fiatjaf/gravity --history
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.                                                                               
-    0   2018-11-16 03:13:32.176537  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
-    -1  2018-11-14 20:34:36.67102   QmVQ3zYTPnnu7iggGh7Cpr9naL7VDZ8x8cWd2EMexDv3w
+     0  2018-11-28 11:39:53.338399  zdj7Wmp2eLDSEQXiFDFaJqkyBdAtjcf84fLWtC3UGC1oW7pUT
+    -1  2018-11-16 03:13:32.176537  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
+    -2  2018-11-14 20:34:36.67102   QmVQ3zYTPnnu7iggGh7Cpr9naL7VDZ8x8cWd2EMexDv3w
 
 ~> gravity get fiatjaf/
 fiatjaf/videos              zdj7Wa7HGxHGfAb1o9xRFDhbSjuWqVBAaavRw5WX4BEVV8YD5  some videos worth saving.
@@ -146,8 +147,9 @@ fiatjaf/gravity             QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa     p
 fiatjaf/bitcoin.pdf         QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj     
 fiatjaf/fiatjaf.alhur.es    QmT5vWxZ1qTePvZg9NJAJDBJtZ81UGu9MoVbsmJoc946ho     my personal website.
 
-~> gravity get QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa
-fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
+~> gravity find QmVQ3zYTPnnu7iggGh7Cpr9naL7VDZ8x8cWd2EMexDv3w
+fiatjaf/gravity
+    -2  2018-11-14 20:34:36.67102   QmVQ3zYTPnnu7iggGh7Cpr9naL7VDZ8x8cWd2EMexDv3w
 
 ~> gravity list fiatjaf/cof/
 zdj7WiDR1mUKjC7PU5aVTU3s3Dkd9UW2pQe9UsXPi4WQ62yTt 13680450440 aulas/
@@ -159,6 +161,7 @@ zdj7WjJMeYNUYxTSUFikWiDVmAwFvExzKjBZyvC71hrrx5V6x 36802688  001/
 zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		var cidquery bool
 		var req *http.Request
 
 		if len(args) == 0 {
@@ -166,6 +169,7 @@ zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
 		} else if strings.IndexByte(args[0], '/') == -1 {
 			cid := args[0]
 			req, _ = c.Get("/?cid=" + cid).Request()
+			cidquery = true
 		} else {
 			parts := strings.Split(args[0], "/")
 			owner := parts[0]
@@ -188,11 +192,24 @@ zdj7WbCpyr2qx765pmd5TbeiRmrQdQbnWQPVK6LuGPUfCGksM 53582473  002/
 		tw := tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
 
 		if j.IsArray() {
-			// it's a list of all the records, or all the records for one user
-			j.ForEach(func(_, value gjson.Result) bool {
-				printRecord(tw, value, quiet)
-				return true
-			})
+			if !cidquery {
+				// it's a list of all the records, or all the records for one user
+				j.ForEach(func(_, value gjson.Result) bool {
+					printRecord(tw, value, quiet)
+					return true
+				})
+			} else {
+				// it's a list of history entries
+				tw.Flush()
+				j.ForEach(func(_, h gjson.Result) bool {
+					fmt.Fprintf(os.Stdout, "%s/%s\n",
+						h.Get("owner").String(), h.Get("name").String())
+					tw = tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
+					printVersion(tw, int(-h.Get("nseq").Int()), h)
+					tw.Flush()
+					return true
+				})
+			}
 		} else if j.IsObject() {
 			// it's just one record
 			parts := strings.Split(args[0], "/")

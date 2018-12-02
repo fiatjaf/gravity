@@ -14,50 +14,36 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func listNames(w http.ResponseWriter, r *http.Request) {
+func queryCIDs(w http.ResponseWriter, r *http.Request) {
 	owner := mux.Vars(r)["owner"]
 	cid := strings.TrimSpace(r.URL.Query().Get("cid"))
 	if strings.HasPrefix(cid, "/ipfs/") {
 		cid = cid[6:]
 	}
 
-	var res interface{}
 	var err error
 
 	match := ""
-	args := []interface{}{}
-	var entries []Entry
+	args := []interface{}{cid}
+	var entries []HistoryEntry
 
-	if owner == "" {
-		// list all cids
-		if cid != "" {
-			match = `WHERE cid = $1 `
-			args = append(args, cid)
-		}
-		err = pg.Select(&entries, `
-            SELECT owner, name, cid, note FROM head `+
-			match+`
-            ORDER BY updated_at DESC
-        `, args...)
-	} else {
-		// list all cids for owner
-		match = `WHERE owner = $1 `
-		args = []interface{}{owner}
-		if cid != "" {
-			match += `AND cid = $2 `
-			args = append(args, cid)
-		}
-		err = pg.Select(&entries, `
-            SELECT owner, name, cid, note FROM head `+
-			match+`
-            ORDER BY updated_at DESC
-        `, args...)
+	if owner != "" {
+		// just for one owner
+		match += `AND head.owner = $2 `
+		args = append(args, owner)
 	}
 
-	if len(entries) == 0 {
-		res = make([]Entry, 0)
-	}
-	res = entries
+	err = pg.Select(&entries, `
+        SELECT owner, name, set_at, history.cid, (
+          SELECT count(*) FROM history AS hc
+          WHERE hc.record_id = history.record_id
+            AND hc.set_at > history.set_at
+        ) AS nseq
+        FROM history 
+        INNER JOIN head ON history.record_id = head.id
+        WHERE history.cid = $1 `+match+`
+        ORDER BY updated_at DESC
+    `, args...)
 
 	if err != nil && err != sql.ErrNoRows {
 		log.Warn().Err(err).Str("owner", owner).Str("cid", cid).
@@ -66,7 +52,45 @@ func listNames(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	if entries == nil {
+		entries = make([]HistoryEntry, 0)
+	}
+
+	json.NewEncoder(w).Encode(entries)
+}
+
+func listNames(w http.ResponseWriter, r *http.Request) {
+	owner := mux.Vars(r)["owner"]
+
+	var err error
+
+	var entries []Entry
+	if owner == "" {
+		// all records globally
+		err = pg.Select(&entries, `
+            SELECT owner, name, cid, note FROM head 
+            ORDER BY updated_at DESC
+        `)
+	} else {
+		// all records for just one user
+		err = pg.Select(&entries, `
+            SELECT owner, name, cid, note FROM head
+            WHERE owner = $1
+            ORDER BY updated_at DESC
+        `, owner)
+	}
+
+	if err != nil && err != sql.ErrNoRows {
+		log.Warn().Err(err).Str("owner", owner).Msg("error fetching stuff from database")
+		http.Error(w, "Error fetching data.", 500)
+		return
+	}
+
+	if entries == nil {
+		entries = make([]Entry, 0)
+	}
+
+	json.NewEncoder(w).Encode(entries)
 }
 
 func getName(w http.ResponseWriter, r *http.Request) {
