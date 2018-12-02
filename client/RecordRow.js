@@ -31,8 +31,8 @@ export default function RecordRow({owner, name, cid, note}) {
   }, [])
 
   return (
-    <tr>
-      <td>
+    <div className="record-row">
+      <div className="address">
         <Link className="dirlink" to={`/${owner}`}>
           {owner}
         </Link>
@@ -40,8 +40,8 @@ export default function RecordRow({owner, name, cid, note}) {
         <Link className="recordlink" to={`/${owner}/${name}`}>
           {name}
         </Link>
-      </td>
-      <td>
+      </div>
+      <div className="cid">
         <a
           className="cidlink"
           target="_blank"
@@ -49,10 +49,28 @@ export default function RecordRow({owner, name, cid, note}) {
         >
           {cid}
         </a>
-      </td>
-      <td>{note}</td>
-      {nprovs !== null && <td>{nprovs} providers</td>}
-      {nprovs !== null && <td>{ishere ? 'pinned here' : ''}</td>}
-    </tr>
+      </div>
+      <div className="note">{note}</div>
+      <div>
+        {nprovs !== null && (
+          <span title={`${nprovs} providers for this object found.`}>
+            {nprovs}
+          </span>
+        )}
+      </div>
+      <div>
+        {nprovs !== null && (
+          <span
+            title={
+              ishere
+                ? 'This object is present in your local node.'
+                : 'Object not found in your local node.'
+            }
+          >
+            {ishere ? 'here' : '-'}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }

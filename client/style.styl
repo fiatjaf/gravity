@@ -78,17 +78,35 @@ header
 .cidlink
   font-family monospace
   text-decoration none
-  border 1px dotted
   padding 5px
 
   &:hover
     background-color rgba(221, 221, 221, 0.21)
 
-table
-  font-size 104%
+#records
+  .record-row
+    display flex
 
-  td
-    padding 0 7px
+    & > *
+      width 3%
+      margin 0 0.5%
+      white-space nowrap
+
+    .address
+      width 30%
+      overflow hidden
+      text-overflow ellipsis
+
+    .cid
+      width 26%
+      overflow hidden
+      text-overflow ellipsis
+
+    .note
+      width 36%
+      overflow hidden
+      text-overflow ellipsis
+      
 
 main#record
   .body

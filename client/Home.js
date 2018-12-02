@@ -19,13 +19,11 @@ export default function Home() {
     <>
       <section>
         <h1>Objects</h1>
-        <table>
-          <tbody>
-            {entries.map(entry => (
-              <RecordRow key={entry.owner + '/' + entry.name} {...entry} />
-            ))}
-          </tbody>
-        </table>
+        <div id="records">
+          {entries.map(entry => (
+            <RecordRow key={entry.owner + '/' + entry.name} {...entry} />
+          ))}
+        </div>
       </section>
     </>
   )
