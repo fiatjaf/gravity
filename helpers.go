@@ -16,6 +16,7 @@ type Entry struct {
 	CID        string         `json:"cid" db:"cid"`
 	Note       string         `json:"note,omitempty" db:"note"`
 	Body       string         `json:"body,omitempty" db:"body"`
+	NStars     int            `json:"nstars" db:"nstars"`
 	RawHistory sql.NullString `json:"-" db:"raw_history"`
 	History    []HistoryEntry `json:"history,omitempty"`
 }
@@ -26,6 +27,12 @@ type HistoryEntry struct {
 	CID   string `json:"cid" db:"cid"`
 	Date  string `json:"date" db:"set_at"`
 	Nseq  int    `json:"nseq,omitempty" db:"nseq"` // negative number, distance from head
+}
+
+type UserInfo struct {
+	Name     string         `json:"name" db:"name"`
+	RawStars sql.NullString `json:"-" db:"raw_stars"`
+	Stars    []string       `json:"stars"`
 }
 
 func validateJWT(token, owner string, claimsToValidate map[string]interface{}) error {

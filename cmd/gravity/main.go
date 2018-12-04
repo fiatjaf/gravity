@@ -27,6 +27,7 @@ var wait int
 var putNote string
 var quiet bool
 var showVersions bool
+var currentUser string
 
 func main() {
 	rootCmd.PersistentFlags().
@@ -40,10 +41,17 @@ func main() {
 	GetCmd.Flags().Parse(os.Args[1:])
 
 	PutCmd.Flags().
-		StringVarP(&putNote, "note", "n", "", "A note to identify this object.")
+		StringVarP(&putNote, "note", "n", "", "A note to identify this record.")
 	PutCmd.Flags().
 		IntVarP(&wait, "wait", "w", 2, "Time to wait for 'ipfs object stat'.")
 	PutCmd.Flags().Parse(os.Args[1:])
+
+	StarCmd.PersistentFlags().
+		StringVarP(&currentUser, "user", "u", "", "Your username (required).")
+	StarCmd.Flags().Parse(os.Args[1:])
+	StarAddCmd.MarkFlagRequired("user")
+	StarRmCmd.MarkFlagRequired("user")
+	StarListCmd.MarkFlagRequired("user")
 
 	baseURL := server
 	if !strings.HasPrefix(server, "http") {
@@ -53,14 +61,12 @@ func main() {
 		Set("Content-Type", "text/plain").
 		Set("Accept", "application/json")
 
-	rootCmd.AddCommand(RegisterCmd)
-	rootCmd.AddCommand(PutCmd)
-	rootCmd.AddCommand(RenameCmd)
-	rootCmd.AddCommand(NoteCmd)
-	rootCmd.AddCommand(BodyCmd)
-	rootCmd.AddCommand(GetCmd)
-	rootCmd.AddCommand(StatCmd)
+	rootCmd.AddCommand(RegisterCmd, RecoverAccountCmd)
+	rootCmd.AddCommand(PutCmd, RenameCmd, NoteCmd, BodyCmd)
+	rootCmd.AddCommand(GetCmd, StatCmd)
 	rootCmd.AddCommand(DelCmd)
+	rootCmd.AddCommand(StarCmd)
+	StarCmd.AddCommand(StarAddCmd, StarRmCmd, StarListCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -82,7 +88,7 @@ You can use gravity as a hub to which you can announce data you've made availabl
 
 var RegisterCmd = &cobra.Command{
 	Use:   "register [username] [email]",
-	Short: "Register in the gravity server",
+	Short: "Register yourself in the gravity server.",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
 			return errors.New("2 arguments are required, username and email address.")
@@ -124,10 +130,9 @@ var RegisterCmd = &cobra.Command{
 }
 
 var GetCmd = &cobra.Command{
-	Use:        "get [key or cid]",
-	Aliases:    []string{"query", "fetch", "list", "ls"},
-	SuggestFor: []string{"find"},
-	Short:      "Get something from the gravity server",
+	Use:     "get [key or cid]",
+	Aliases: []string{"query", "fetch", "list", "ls", "find"},
+	Short:   "Fetch some record info or query a hash.",
 	Example: `~> gravity get fiatjaf/gravity
 fiatjaf/gravity  QmQjyLocqMrwxNnz5G1UtHZrRNsztgR97jLtch7bK28BWa  precompiled binaries for the gravity CLI tool.
 
@@ -288,7 +293,7 @@ CumulativeSize: 184306
 
 var PutCmd = &cobra.Command{
 	Use:     "put [key] [ipfs cid]",
-	Short:   "Put something on the gravity server",
+	Short:   "Put a new record or update an existing record.",
 	Args:    validateArgKey,
 	Example: `~> gravity put fiatjaf/bitcoin.pdf QmRA3NWM82ZGynMbYzAgYTSXCVM14Wx1RZ8fKP42G6gjgj`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -340,23 +345,23 @@ var RenameCmd = &cobra.Command{
 	Short: "Rename a record.",
 	Args:  validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		updateRecord(args, "name", args[1])
+		updateKind(RECORD)(args[0], "name", args[1])
 	},
 }
 
 var NoteCmd = &cobra.Command{
 	Use:   "note [key] [note]",
-	Short: "Set a note for the object given by [key].",
+	Short: "Set a note for the record given by [key].",
 	Args:  validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		updateRecord(args, "note", args[1])
+		updateKind(RECORD)(args[0], "note", args[1])
 	},
 }
 
 var BodyCmd = &cobra.Command{
 	Use:     "body [key]",
 	Aliases: []string{"edit"},
-	Short:   "Edit the Markdown body for the object given by [key] in your local editor.",
+	Short:   "Edit the Markdown body for the record given by [key] in your local editor.",
 	Args:    validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		program := os.Getenv("EDITOR")
@@ -397,23 +402,14 @@ An amazing thing.
 			return
 		}
 
-		updateRecord(args, "body", string(f.Content))
+		updateKind(RECORD)(args[0], "body", string(f.Content))
 	},
 }
 
 var DelCmd = &cobra.Command{
 	Use:   "del [key]",
-	Short: "Delete something from the gravity server",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			return errors.New("1 arguments is required: username/recordname.")
-		}
-		parts := strings.Split(args[0], "/")
-		if parts[0] == "" || parts[1] == "" {
-			return errors.New("Argument must be username/recordname.")
-		}
-		return nil
-	},
+	Short: "Delete a record.",
+	Args:  validateArgKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		sk, err := getPrivateKey()
 		if err != nil {
@@ -444,5 +440,62 @@ var DelCmd = &cobra.Command{
 			fmt.Fprint(os.Stderr, string(b))
 			return
 		}
+	},
+}
+
+var StarCmd = &cobra.Command{
+	Use:              "star",
+	Aliases:          []string{"like", "favorite"},
+	Short:            "Manage your starred records.",
+	TraverseChildren: true,
+}
+
+var StarAddCmd = &cobra.Command{
+	Use:   "add [key]",
+	Short: "Star some record.",
+	Args:  validateArgKey,
+	Run: func(cmd *cobra.Command, args []string) {
+		updateKind(USER)(currentUser, "star", args[0])
+	},
+}
+
+var StarRmCmd = &cobra.Command{
+	Use:     "rm [key]",
+	Aliases: []string{"unlike", "unfavorite"},
+	Short:   "Unstar some record.",
+	Args:    validateArgKey,
+	Run: func(cmd *cobra.Command, args []string) {
+		updateKind(USER)(currentUser, "unstar", args[0])
+	},
+}
+
+var StarListCmd = &cobra.Command{
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List your starred records.",
+	Run: func(cmd *cobra.Command, args []string) {
+		req, _ := c.Get("/" + currentUser).Request()
+		w, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+			return
+		}
+
+		b, _ := ioutil.ReadAll(w.Body)
+		j := gjson.GetBytes(b, "stars")
+		tw := tabwriter.NewWriter(os.Stdout, 3, 3, 2, ' ', 0)
+		j.ForEach(func(_, value gjson.Result) bool {
+			fmt.Fprintln(tw, value.String())
+			return true
+		})
+		tw.Flush()
+	},
+}
+
+var RecoverAccountCmd = &cobra.Command{
+	Use:   "recoveraccount",
+	Short: "Recover your account after losing your private key.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Fprint(os.Stdin, "This is manual for now. Please message 'fiatjaf' on #ipfs on Freenode if you have lost your key.")
 	},
 }

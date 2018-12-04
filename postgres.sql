@@ -59,6 +59,15 @@ CREATE TRIGGER update_history_ins AFTER INSERT ON head
 CREATE TRIGGER update_history_upd AFTER UPDATE OF cid ON head
   FOR EACH ROW WHEN (NEW.cid != OLD.cid) EXECUTE PROCEDURE update_history();
 
+CREATE TABLE stars (
+  source text NOT NULL REFERENCES users(name),
+  target_owner text NOT NULL,
+  target_name text NOT NULL,
+
+  FOREIGN KEY (target_owner, target_name) REFERENCES head (owner, name),
+  UNIQUE (source, target_owner, target_name)
+);
+
 table users;
 table history;
-select id, owner, name, cid, note from head;
+table stars;

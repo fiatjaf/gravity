@@ -59,6 +59,31 @@ func queryCIDs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(entries)
 }
 
+func getUser(w http.ResponseWriter, r *http.Request) {
+	owner := mux.Vars(r)["owner"]
+
+	userInfo := UserInfo{Stars: []string{}}
+	err := pg.Get(&userInfo, `
+        SELECT name, string_agg(target_owner || '/' || target_name, ',') AS raw_stars
+        FROM users
+        LEFT OUTER JOIN stars ON stars.source = users.name
+        WHERE name = $1
+        GROUP BY name
+    `, owner)
+
+	if userInfo.RawStars.Valid {
+		userInfo.Stars = strings.Split(userInfo.RawStars.String, ",")
+	}
+
+	if err != nil && err != sql.ErrNoRows {
+		log.Warn().Err(err).Str("owner", owner).Msg("error fetching stuff from database")
+		http.Error(w, "Error fetching data.", 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(userInfo)
+}
+
 func listNames(w http.ResponseWriter, r *http.Request) {
 	owner := mux.Vars(r)["owner"]
 
@@ -99,23 +124,33 @@ func getName(w http.ResponseWriter, r *http.Request) {
 
 	// show specific key
 	query := `
-        SELECT owner, name, cid, note
-        FROM head
+        WITH st AS (
+          SELECT count(*) AS nstars FROM stars
+          WHERE target_owner = $1 AND target_name = $2
+        )
+        SELECT owner, name, cid, note, nstars
+        FROM head, st
         WHERE owner = $1 AND name = $2
     `
 	if r.URL.Query().Get("full") == "1" {
 		query = `
             WITH df AS (
-                SELECT id AS rid, owner, name, cid, note, body
-                FROM head
-                WHERE owner = $1 AND name = $2
+              SELECT id AS rid, owner, name, cid, note, body
+              FROM head
+              WHERE owner = $1 AND name = $2
             ), ph AS (
-                SELECT array_agg(cid || '|' || set_at ORDER BY id DESC) AS r
-                FROM history
-                WHERE record_id = (SELECT rid FROM df)
+              SELECT array_agg(cid || '|' || set_at ORDER BY id DESC) AS r
+              FROM history
+              WHERE record_id = (SELECT rid FROM df)
+            ), st AS (
+              SELECT count(*) AS nstars FROM stars
+              WHERE target_owner = $1 AND target_name = $2
             )
-            SELECT owner, name, cid, note, body, array_to_string(r, '~') AS raw_history
-            FROM df, ph;
+            SELECT
+              owner, name, cid, note, body,
+              array_to_string(r, '~') AS raw_history,
+              nstars
+            FROM df, ph, st;
         `
 	}
 
@@ -184,9 +219,9 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = pg.Exec(`
-            INSERT INTO users (name, email, pk)
-            VALUES ($1, $2, $3)
-        `, owner, email, pk)
+        INSERT INTO users (name, email, pk)
+        VALUES ($1, $2, $3)
+    `, owner, email, pk)
 
 	if err != nil {
 		log.Warn().Err(err).Str("owner", owner).Str("email", email).
@@ -209,27 +244,53 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := r.Header.Get("Token")
-	err = validateJWT(token, owner, data)
+	err = validateJWT(token, owner, map[string]interface{}{
+		"owner": owner,
+	})
 	if err != nil {
 		log.Warn().Err(err).Str("token", token).Msg("token data is invalid")
 		http.Error(w, "Token data is invalid: "+err.Error(), 401)
 		return
 	}
 
-	setKeys := make([]string, len(data))
-	setValues := make([]interface{}, len(data)+1)
-	setValues[0] = owner
-	i := 0
-	for k, v := range data {
-		setKeys[i] = fmt.Sprintf("%s = $%v", k, i+2)
-		setValues[i+1] = v
-		i++
-	}
-	_, err = pg.Exec(`
+	if target, ok := data["star"]; ok {
+		// special case: star
+		delete(data, "star")
+		parts := strings.Split(target.(string), "/")
+		target_owner := parts[0]
+		target_name := parts[1]
+		_, err = pg.Exec(`
+            INSERT INTO stars (source, target_owner, target_name)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (source, target_owner, target_name) DO NOTHING
+        `, owner, target_owner, target_name)
+	} else if target, ok := data["unstar"]; ok {
+		// special case: unstar
+		delete(data, "unstar")
+		parts := strings.Split(target.(string), "/")
+		target_owner := parts[0]
+		target_name := parts[1]
+		_, err = pg.Exec(`
+            DELETE FROM stars
+            WHERE source = $1
+              AND target_owner = $2 AND target_name = $3
+        `, owner, target_owner, target_name)
+	} else {
+		setKeys := make([]string, len(data))
+		setValues := make([]interface{}, len(data)+1)
+		setValues[0] = owner
+		i := 0
+		for k, v := range data {
+			setKeys[i] = fmt.Sprintf("%s = $%v", k, i+2)
+			setValues[i+1] = v
+			i++
+		}
+		_, err = pg.Exec(`
         UPDATE users SET
         `+strings.Join(setKeys, ", ")+`
         WHERE owner = $1
     `, setValues...)
+	}
 
 	if err != nil {
 		log.Warn().Err(err).Str("owner", owner).Fields(data).

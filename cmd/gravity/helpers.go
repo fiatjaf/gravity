@@ -23,6 +23,11 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+const (
+	USER   = "USER"
+	RECORD = "RECORD"
+)
+
 func getIPFSDir() string {
 	ipfspath := os.Getenv("IPFS_PATH")
 
@@ -169,37 +174,50 @@ func validateArgKey(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func updateRecord(args []string, key string, value interface{}) {
-	sk, err := getPrivateKey()
-	if err != nil {
-		return
-	}
+func updateKind(kind string) func(string, string, interface{}) {
+	return func(base string, key string, value interface{}) {
+		sk, err := getPrivateKey()
+		if err != nil {
+			return
+		}
 
-	parts := strings.Split(args[0], "/")
-	owner := parts[0]
-	name := parts[1]
+		parts := strings.Split(base, "/")
+		owner := parts[0]
 
-	// make jwt to send request
-	token, err := makeJWT(sk, jwt.MapClaims{
-		"owner": owner,
-		"name":  name,
-	})
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
-		return
-	}
+		var mapClaims jwt.MapClaims
+		var path string
 
-	req, _ := c.Patch("/"+owner+"/"+name).Set("Token", token).
-		BodyJSON(map[string]interface{}{key: value}).Request()
-	w, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
-		return
-	}
-	if w.StatusCode >= 300 {
-		b, _ := ioutil.ReadAll(w.Body)
-		fmt.Fprintln(os.Stderr, string(b))
-		return
+		if kind == RECORD {
+			name := parts[1]
+			mapClaims = jwt.MapClaims{
+				"owner": owner,
+				"name":  name,
+			}
+			path = "/" + owner + "/" + name
+		} else if kind == USER {
+			mapClaims = jwt.MapClaims{"owner": owner}
+			path = "/" + owner
+		}
+
+		// make jwt to send request
+		token, err := makeJWT(sk, mapClaims)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to make JWT: "+err.Error())
+			return
+		}
+
+		req, _ := c.Patch(path).Set("Token", token).
+			BodyJSON(map[string]interface{}{key: value}).Request()
+		w, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Request failed: "+err.Error())
+			return
+		}
+		if w.StatusCode >= 300 {
+			b, _ := ioutil.ReadAll(w.Body)
+			fmt.Fprintln(os.Stderr, string(b))
+			return
+		}
 	}
 }
 

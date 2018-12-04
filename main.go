@@ -73,9 +73,10 @@ func main() {
 	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").Queries("cid", "").
 		HandlerFunc(switchHTMLJSON(queryCIDs))
 
-	r.Path("/").Methods("GET").
-		HandlerFunc(switchHTMLJSON(listNames))
 	r.Path("/{owner:[\\d\\w-]+}").Methods("GET").
+		HandlerFunc(switchHTMLJSON(getUser))
+
+	r.Path("/").Methods("GET").
 		HandlerFunc(switchHTMLJSON(listNames))
 	r.Path("/{owner:[\\d\\w-]+}/").Methods("GET").
 		HandlerFunc(switchHTMLJSON(listNames))
