@@ -5,7 +5,7 @@ import {Link} from 'react-router-dom'
 
 import {GlobalContext} from './Main'
 
-export default function RecordRow({owner, name, cid, note}) {
+export default function RecordRow({owner, name, cid, note, nstars}) {
   let {nodeId} = useContext(GlobalContext)
 
   let [nprovs, setNProvs] = useState(null)
@@ -40,6 +40,7 @@ export default function RecordRow({owner, name, cid, note}) {
         <Link className="recordlink" to={`/${owner}/${name}`}>
           {name}
         </Link>
+        {nstars !== 0 ? `★ ${nstars}` : ''}
       </div>
       <div className="cid">
         <a

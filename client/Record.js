@@ -31,6 +31,7 @@ export default function Home(props) {
               {owner}
             </Link>
             /{name}
+            {entry && entry.nstars !== 0 ? ` ★ ${entry.nstars}` : ''}
           </h1>
           <aside>{entry && entry.note && <p>{entry.note}</p>}</aside>
         </header>

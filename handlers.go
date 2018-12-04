@@ -93,14 +93,26 @@ func listNames(w http.ResponseWriter, r *http.Request) {
 	if owner == "" {
 		// all records globally
 		err = pg.Select(&entries, `
-            SELECT owner, name, cid, note FROM head 
+            SELECT
+              owner, name, cid, note,
+              count(stars) AS nstars
+            FROM head 
+            LEFT OUTER JOIN stars
+              ON target_owner = head.owner AND target_name = head.name
+            GROUP BY owner, name, cid, note, updated_at
             ORDER BY updated_at DESC
         `)
 	} else {
 		// all records for just one user
 		err = pg.Select(&entries, `
-            SELECT owner, name, cid, note FROM head
+            SELECT
+              owner, name, cid, note,
+              count(stars) AS nstars
+            FROM head
+            LEFT OUTER JOIN stars
+              ON target_owner = head.owner AND target_name = head.name
             WHERE owner = $1
+            GROUP BY owner, name, cid, note, updated_at
             ORDER BY updated_at DESC
         `, owner)
 	}
