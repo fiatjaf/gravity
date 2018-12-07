@@ -171,9 +171,8 @@ func getName(w http.ResponseWriter, r *http.Request) {
 	res := &entry
 	if err == sql.ErrNoRows {
 		res = nil
-	}
-
-	if err != nil && err != sql.ErrNoRows {
+		goto end
+	} else if err != nil && err != sql.ErrNoRows {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).
 			Msg("error fetching stuff from database")
 		http.Error(w, "Error fetching data.", 500)
@@ -192,6 +191,7 @@ func getName(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+end:
 	json.NewEncoder(w).Encode(res)
 }
 

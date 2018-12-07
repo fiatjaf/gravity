@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,11 +18,15 @@ import (
 )
 
 type Settings struct {
-	ServiceName string `envconfig:"SERVICE_NAME" required:"true"`
-	ServiceURL  string `envconfig:"SERVICE_URL" required:"true"`
-	Port        string `envconfig:"PORT" required:"true"`
-	PostgresURL string `envconfig:"DATABASE_URL" required:"true"`
-	IconSVG     string `envconfig:"ICON"`
+	ServiceName   string `envconfig:"SERVICE_NAME" required:"true"`
+	ServiceURL    string `envconfig:"SERVICE_URL" required:"true"`
+	Port          string `envconfig:"PORT" required:"true"`
+	PostgresURL   string `envconfig:"DATABASE_URL" required:"true"`
+	IconSVG       string `envconfig:"ICON"`
+	PrivateKeyPEM string `envconfig:"PRIVATE_KEY"`
+	PrivateKey    *rsa.PrivateKey
+	PublicKey     rsa.PublicKey
+	PublicKeyPEM  string
 }
 
 var err error
@@ -32,6 +39,24 @@ func main() {
 	err = envconfig.Process("", &s)
 	if err != nil {
 		log.Fatal().Err(err).Msg("couldn't process envconfig.")
+	}
+
+	// key stuff (needed for the activitypub integration)
+	if s.PrivateKeyPEM != "" {
+		s.PrivateKeyPEM = strings.Replace(s.PrivateKeyPEM, "$$", "\n", -1)
+		decodedskpem, _ := pem.Decode([]byte(s.PrivateKeyPEM))
+
+		sk, err := x509.ParsePKCS1PrivateKey(decodedskpem.Bytes)
+		if err != nil {
+			log.Fatal().Err(err).Msg("couldn't process private key pem.")
+		}
+
+		s.PrivateKey = sk
+		s.PublicKey = sk.PublicKey
+		s.PublicKeyPEM = string(pem.EncodeToMemory(&pem.Block{
+			Type:  "RSA PUBLIC KEY",
+			Bytes: x509.MarshalPKCS1PublicKey(&sk.PublicKey),
+		}))
 	}
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -51,6 +76,15 @@ func main() {
 			fmt.Fprint(w, s.IconSVG)
 			return
 		})
+
+	r.Path("/pub").HandlerFunc(pubInbox)
+	r.Path("/pub/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(pubUserActor)
+	r.Path("/pub/{owner:[\\d\\w-]+}/followers").Methods("GET").HandlerFunc(pubUserFollowers)
+	r.Path("/pub/{owner:[\\d\\w-]+}/outbox").Methods("GET").HandlerFunc(pubOutbox)
+	r.Path("/pub/create/{id}").Methods("GET").HandlerFunc(pubCreate)
+	r.Path("/pub/note/{id}").Methods("GET").HandlerFunc(pubNote)
+	r.Path("/.well-known/webfinger").HandlerFunc(webfinger)
+
 	r.Path("/{owner}").Methods("POST").HandlerFunc(registerUser)
 	r.Path("/{owner}/").Methods("POST").HandlerFunc(registerUser)
 

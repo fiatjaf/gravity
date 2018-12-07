@@ -63,11 +63,34 @@ CREATE TABLE stars (
   source text NOT NULL REFERENCES users(name),
   target_owner text NOT NULL,
   target_name text NOT NULL,
+  starred_at timestamp NOT NULL DEFAULT now(),
 
   FOREIGN KEY (target_owner, target_name) REFERENCES head (owner, name),
   UNIQUE (source, target_owner, target_name)
 );
 
+CREATE TABLE pub_user_followers (
+  follower text NOT NULL,
+  target text NOT NULL REFERENCES users (name),
+
+  UNIQUE(follower, target)
+);
+
+CREATE VIEW pub_outbox AS
+  SELECT
+    owner,
+    history.id::text AS raw_id,
+
+    'Note' AS "type",
+    set_at AS "published",
+    owner || '/' || name || ': https://ipfs.io/ipfs/' || history.cid AS "content",
+    'https://www.w3.org/ns/activitystreams#Public' AS "to"
+  FROM history
+  INNER JOIN head ON history.record_id = head.id
+  ORDER BY history.set_at DESC;
+
 table users;
 table history;
 table stars;
+table pub_outbox;
+table pub_user_followers;
