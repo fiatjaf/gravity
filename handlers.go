@@ -349,7 +349,8 @@ func setName(w http.ResponseWriter, r *http.Request) {
 		cid = pcid.String()
 	}
 
-	_, err = pg.Exec(`
+	var id string
+	err = pg.Get(&id, `
         INSERT INTO head (owner, name, cid, note)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (owner, name) DO
@@ -357,6 +358,7 @@ func setName(w http.ResponseWriter, r *http.Request) {
           cid = $3,
           note = CASE WHEN character_length($4) > 0 THEN $4 ELSE head.note END,
           updated_at = now()
+        RETURNING id::text
     `, owner, name, cid, note)
 	if err != nil {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).
@@ -364,6 +366,10 @@ func setName(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error upserting record: "+err.Error(), 500)
 		return
 	}
+
+	// dispatch to activitypub
+	log.Print(id, " ", owner, " ", name, " ", cid)
+	go pubDispatchNote(id, owner, name, cid)
 
 	w.WriteHeader(200)
 }

@@ -53,9 +53,14 @@ func main() {
 
 		s.PrivateKey = sk
 		s.PublicKey = sk.PublicKey
+
+		key, err := x509.MarshalPKIXPublicKey(&sk.PublicKey)
+		if err != nil {
+			log.Fatal().Err(err).Msg("couldn't marshal public key to pem.")
+		}
 		s.PublicKeyPEM = string(pem.EncodeToMemory(&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(&sk.PublicKey),
+			Type:  "PUBLIC KEY",
+			Bytes: key,
 		}))
 	}
 
@@ -78,6 +83,7 @@ func main() {
 		})
 
 	r.Path("/pub").HandlerFunc(pubInbox)
+	r.Path("/pub/key").HandlerFunc(pubKey)
 	r.Path("/pub/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(pubUserActor)
 	r.Path("/pub/{owner:[\\d\\w-]+}/followers").Methods("GET").HandlerFunc(pubUserFollowers)
 	r.Path("/pub/{owner:[\\d\\w-]+}/outbox").Methods("GET").HandlerFunc(pubOutbox)
