@@ -47,7 +47,7 @@ func webfinger(w http.ResponseWriter, r *http.Request) {
 			{
 				Rel:  "self",
 				Type: "application/activity+json",
-				Href: s.ServiceURL + "/pub/" + name,
+				Href: s.ServiceURL + "/pub/user/" + name,
 			},
 		},
 	})

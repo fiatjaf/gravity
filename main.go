@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fiatjaf/litepub"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -32,6 +33,7 @@ type Settings struct {
 var err error
 var s Settings
 var r *mux.Router
+var pub litepub.LitePub
 var pg *sqlx.DB
 var log = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
@@ -64,6 +66,10 @@ func main() {
 		}))
 	}
 
+	pub = litepub.LitePub{
+		PrivateKey: s.PrivateKey,
+	}
+
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	log = log.With().Timestamp().Logger()
 
@@ -83,10 +89,9 @@ func main() {
 		})
 
 	r.Path("/pub").HandlerFunc(pubInbox)
-	r.Path("/pub/key").HandlerFunc(pubKey)
-	r.Path("/pub/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(pubUserActor)
-	r.Path("/pub/{owner:[\\d\\w-]+}/followers").Methods("GET").HandlerFunc(pubUserFollowers)
-	r.Path("/pub/{owner:[\\d\\w-]+}/outbox").Methods("GET").HandlerFunc(pubOutbox)
+	r.Path("/pub/user/{owner:[\\d\\w-]+}").Methods("GET").HandlerFunc(pubUserActor)
+	r.Path("/pub/user/{owner:[\\d\\w-]+}/followers").Methods("GET").HandlerFunc(pubUserFollowers)
+	r.Path("/pub/user/{owner:[\\d\\w-]+}/outbox").Methods("GET").HandlerFunc(pubOutbox)
 	r.Path("/pub/create/{id}").Methods("GET").HandlerFunc(pubCreate)
 	r.Path("/pub/note/{id}").Methods("GET").HandlerFunc(pubNote)
 	r.Path("/.well-known/webfinger").HandlerFunc(webfinger)

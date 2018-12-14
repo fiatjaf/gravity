@@ -76,21 +76,9 @@ CREATE TABLE pub_user_followers (
   UNIQUE(follower, target)
 );
 
-CREATE VIEW pub_outbox AS
-  SELECT
-    owner,
-    history.id::text AS raw_id,
-
-    'Note' AS "type",
-    set_at AS "published",
-    owner || '/' || name || ': https://ipfs.io/ipfs/' || history.cid AS "content",
-    'https://www.w3.org/ns/activitystreams#Public' AS "to"
-  FROM history
-  INNER JOIN head ON history.record_id = head.id
-  ORDER BY history.set_at DESC;
-
 table users;
 table history;
 table stars;
 table pub_outbox;
 table pub_user_followers;
+
