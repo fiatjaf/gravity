@@ -21,6 +21,12 @@
 			"revisionTime": "2018-09-21T17:23:15Z"
 		},
 		{
+			"checksumSHA1": "fL8mxrZ9A5N0Df92p3cuNQjISu0=",
+			"path": "github.com/fiatjaf/litepub",
+			"revision": "fb8610fd4558ab8cf77162fa082a40391fc76b53",
+			"revisionTime": "2018-12-14T20:53:30Z"
+		},
+		{
 			"checksumSHA1": "D801O79vbqb3Oj8ffY4xOnSg814=",
 			"path": "github.com/gogo/protobuf/proto",
 			"revision": "211a54c57504366b3bf4b490fb3c0a5f5b8d290b",
@@ -49,6 +55,12 @@
 			"path": "github.com/gorilla/mux",
 			"revision": "b57cb1605fd11ba2ecfa7f68992b4b9cc791934d",
 			"revisionTime": "2018-04-16T20:45:19Z"
+		},
+		{
+			"checksumSHA1": "B8N570di1HpYGhZGc/dUhz9fq9c=",
+			"path": "github.com/gumieri/open-in-editor",
+			"revision": "4f3f3f35875df8c8856ca2e45a559291f2e31c08",
+			"revisionTime": "2018-09-20T12:36:53Z"
 		},
 		{
 			"checksumSHA1": "DeCJipQ5LSYKWSQBMkvnM2FtDSU=",
