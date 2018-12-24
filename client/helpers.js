@@ -1,8 +1,12 @@
+/** @format */
+
 const fetch = window.fetch
 
 import {toast} from 'react-toastify'
 
 export async function fetchEntries(owner = '') {
+  if (owner) owner += '/'
+
   try {
     let res = await fetch('/' + owner)
     if (!res.ok) throw new Error(await res.text())

@@ -27,12 +27,13 @@ export const GlobalContext = React.createContext({})
 export default function Main() {
   let [nodeId, setNodeId] = useState(null)
 
-  useEffect(async () => {
+  useEffect(() => {
     if (window.ipfs) {
-      let info = await window.ipfs.id()
-      setNodeId(info.ID)
+      window.ipfs.id().then(info => {
+        setNodeId(info.ID)
+      })
     }
-  })
+  }, [])
 
   return (
     <>

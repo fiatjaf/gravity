@@ -9,12 +9,11 @@ export default function Home(props) {
   let {owner} = props.match.params
   let [entries, setEntries] = useState([])
 
-  async function loadEntries() {
-    let entries = await fetchEntries(owner)
-    if (entries) setEntries(entries)
-  }
-
-  useEffect(loadEntries, [])
+  useEffect(() => {
+    fetchEntries(owner).then(entries => {
+      if (entries) setEntries(entries)
+    })
+  }, [])
 
   return (
     <>

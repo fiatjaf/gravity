@@ -8,12 +8,11 @@ import {fetchEntries} from './helpers'
 export default function Home() {
   let [entries, setEntries] = useState([])
 
-  async function loadEntries() {
-    let entries = await fetchEntries()
-    if (entries) setEntries(entries)
-  }
-
-  useEffect(loadEntries, [])
+  useEffect(() => {
+    fetchEntries().then(entries => {
+      if (entries) setEntries(entries)
+    })
+  }, [])
 
   return (
     <>
