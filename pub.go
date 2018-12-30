@@ -271,7 +271,12 @@ func pubInbox(w http.ResponseWriter, r *http.Request) {
 		}
 		resp, err := pub.SendSigned(
 			s.ServiceURL+"/pub/user/"+actor+"#main-key", url, accept)
-		b, _ := ioutil.ReadAll(resp.Body)
+
+		var b []byte
+		if resp != nil && resp.Body != nil {
+			b, _ = ioutil.ReadAll(resp.Body)
+			b, _ = ioutil.ReadAll(resp.Body)
+		}
 		if err != nil {
 			log.Warn().Err(err).Str("body", string(b)).
 				Msg("failed to send Accept")
@@ -354,14 +359,20 @@ WHERE target = $1
 		resp, err := pub.SendSigned(
 			s.ServiceURL+"/pub/user/"+owner+"#main-key", url, create)
 		if err != nil {
-			b, _ := ioutil.ReadAll(resp.Body)
+			var b []byte
+			if resp != nil && resp.Body != nil {
+				b, _ = ioutil.ReadAll(resp.Body)
+			}
 			log.Warn().Err(err).Str("body", string(b)).
 				Msg("failed to send Accept")
 		}
 
 		log.Print(resp.Request.Header)
 		log.Print(resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
-		log.Print(string(b))
+		var b []byte
+		if resp != nil && resp.Body != nil {
+			b, _ = ioutil.ReadAll(resp.Body)
+			log.Print(string(b))
+		}
 	}
 }
