@@ -346,6 +346,7 @@ WHERE target = $1
 	if err != nil {
 		log.Warn().Err(err).Str("owner", owner).Str("name", name).
 			Msg("failed to fetch followers")
+		return
 	}
 
 	for _, target := range followers {
@@ -365,6 +366,7 @@ WHERE target = $1
 			}
 			log.Warn().Err(err).Str("body", string(b)).
 				Msg("failed to send Accept")
+			continue
 		}
 
 		log.Print(resp.Request.Header)
